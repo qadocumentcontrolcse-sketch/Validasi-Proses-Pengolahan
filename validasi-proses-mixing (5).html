@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Validasi Proses Mixing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F6F6; --surface:#FFFFFF; --primary:#0F5C5C; --primary-dark:#0A4141; --primary-tint:#E4EFEE;
+    --accent:#C77D2E; --accent-tint:#FBEDDD; --text:#1B2B2B; --text-muted:#5C7070; --border:#DEE7E6;
+    --success:#2F7D4F; --success-bg:#E9F5EE; --danger:#B3261E; --danger-bg:#FBEAEA; --warn:#946200; --warn-bg:#FDF3DC;
+    --radius:10px; --shadow:0 1px 2px rgba(15,50,50,0.06), 0 6px 20px rgba(15,50,50,0.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  #app{min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{background:var(--primary-dark);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--primary),#177373);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.15);}
+  .brand-text h1{font-size:16px;margin:0;font-weight:600;}
+  .brand-text p{font-size:12px;margin:2px 0 0;color:#B8D0CE;}
+  .tabs{display:flex;gap:6px;background:rgba(255,255,255,0.08);padding:4px;border-radius:10px;flex-wrap:wrap;}
+  .tab-btn{border:none;background:transparent;color:#CFE3E1;padding:9px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s ease;font-family:inherit;white-space:nowrap;}
+  .tab-btn.active{background:#fff;color:var(--primary-dark);}
+  .tab-btn:not(.active):hover{background:rgba(255,255,255,0.12);color:#fff;}
+  main{flex:1;padding:28px;max-width:1360px;margin:0 auto;width:100%;}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:16px;}
+  .page-head h2{font-size:20px;margin:0 0 4px;}
+  .page-head p{margin:0;color:var(--text-muted);font-size:13.5px;}
+  .btn{border:none;cursor:pointer;font-family:inherit;font-weight:600;font-size:13.5px;padding:10px 18px;border-radius:8px;transition:transform .1s ease;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;}
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{background:var(--primary-dark);}
+  .btn-ghost{background:transparent;color:var(--primary-dark);border:1px solid var(--border);}
+  .btn-ghost:hover{background:var(--primary-tint);}
+  .btn-sm{padding:6px 12px;font-size:12.5px;border-radius:6px;}
+  .btn[disabled]{opacity:0.5;cursor:not-allowed;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;padding:10px 12px;background:var(--primary-tint);color:var(--primary-dark);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;}
+  td{padding:10px 12px;border-top:1px solid var(--border);vertical-align:top;white-space:nowrap;}
+  tbody tr:hover{background:#FAFCFC;}
+  .code-badge{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;background:var(--primary-tint);color:var(--primary-dark);padding:3px 9px;border-radius:20px;border:1px solid #CFE3E1;}
+  .empty-state{padding:60px 20px;text-align:center;color:var(--text-muted);}
+  .empty-state .icon{font-size:34px;margin-bottom:10px;}
+  .empty-state h3{margin:0 0 6px;color:var(--text);font-size:15px;}
+  .empty-state p{margin:0;font-size:13px;}
+  .search-box{position:relative;max-width:340px;flex:1;min-width:220px;}
+  .search-box input{padding-left:34px;}
+  .search-box .icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;}
+  .overlay{position:fixed;inset:0;background:rgba(15,30,30,0.45);display:flex;justify-content:flex-end;z-index:50;animation:fadeIn .15s ease;}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .drawer{background:var(--bg);width:min(760px,96vw);height:100%;overflow-y:auto;box-shadow:-8px 0 24px rgba(0,0,0,0.15);animation:slideIn .18s ease;}
+  @keyframes slideIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+  .drawer-head{position:sticky;top:0;background:var(--primary-dark);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;z-index:2;}
+  .drawer-head h3{margin:0;font-size:16px;}
+  .drawer-close{background:rgba(255,255,255,0.12);border:none;color:#fff;width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:15px;}
+  .drawer-body{padding:22px 24px 90px;}
+  .section-title{font-size:12.5px;font-weight:700;color:var(--primary-dark);text-transform:uppercase;letter-spacing:0.5px;margin:26px 0 12px;display:flex;align-items:center;gap:8px;}
+  .section-title:first-child{margin-top:0;}
+  .section-title .n{background:var(--accent);color:#fff;width:20px;height:20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  .field{margin-bottom:2px;}
+  .field.full{grid-column:1/-1;}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--text-muted);margin-bottom:6px;}
+  input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--text);}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--primary);outline-offset:1px;border-color:var(--primary);}
+  textarea{resize:vertical;min-height:56px;}
+  .hint{font-size:11.5px;color:var(--text-muted);margin-top:5px;}
+  .computed-box{background:var(--primary-tint);border:1px dashed #9FC6C3;border-radius:7px;padding:9px 11px;font-size:13.5px;font-weight:600;color:var(--primary-dark);}
+  .mini-table{width:100%;border-collapse:collapse;margin-top:8px;}
+  .mini-table td{padding:5px 4px;border:none;vertical-align:top;}
+  .mini-table input,.mini-table select{font-size:12.5px;padding:7px 9px;}
+  .row-remove{background:var(--danger-bg);color:var(--danger);border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:13px;}
+  .add-row-btn{margin-top:6px;background:none;border:1px dashed #9FC6C3;color:var(--primary-dark);padding:8px 14px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:600;width:100%;}
+  .add-row-btn:hover{background:var(--primary-tint);}
+  .drawer-footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:14px 24px;display:flex;justify-content:flex-end;gap:10px;}
+  .badge-status{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:0.2px;white-space:nowrap;}
+  .st-acc{background:var(--success-bg);color:var(--success);}
+  .st-wait{background:var(--warn-bg);color:var(--warn);}
+  .st-reject{background:var(--danger-bg);color:var(--danger);}
+  .st-none{background:#EEF2F2;color:var(--text-muted);}
+  .actions-cell{display:flex;gap:6px;}
+  .icon-btn{border:none;background:var(--primary-tint);color:var(--primary-dark);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:13px;}
+  .icon-btn.danger{background:var(--danger-bg);color:var(--danger);}
+  .icon-btn:hover{filter:brightness(0.95);}
+  .login-wrap{max-width:400px;margin:60px auto;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:34px 30px;text-align:center;}
+  .stamp{width:64px;height:64px;border-radius:50%;border:3px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;line-height:1.2;transform:rotate(-8deg);}
+  .login-wrap h2{margin:0 0 6px;font-size:17px;}
+  .login-wrap p{margin:0 0 20px;color:var(--text-muted);font-size:13px;}
+  .login-wrap input{margin-bottom:12px;text-align:center;letter-spacing:2px;}
+  .login-error{color:var(--danger);font-size:12.5px;margin:-4px 0 12px;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--primary-dark);color:#fff;padding:12px 18px;border-radius:9px;font-size:13px;box-shadow:var(--shadow);z-index:100;animation:fadeIn .2s ease;}
+  .loading-row{padding:40px;text-align:center;color:var(--text-muted);font-size:13px;}
+  .footer-note{padding:16px 28px;color:var(--text-muted);font-size:11.5px;text-align:center;}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--primary-tint);color:var(--primary-dark);padding:5px 10px;border-radius:20px;font-size:12.5px;margin:3px 5px 3px 0;}
+  .chip button{border:none;background:none;color:var(--primary-dark);cursor:pointer;font-size:12px;padding:0;line-height:1;}
+  .chip button:hover{color:var(--danger);}
+  .cat-group{margin-bottom:22px;}
+  .cat-group h4{margin:0 0 8px;font-size:13px;color:var(--text);}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  .detail-item{padding:14px 16px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);}
+  .detail-item:nth-child(2n){border-right:none;}
+  .detail-item .lbl{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;}
+  .detail-item .val{font-size:14px;font-weight:600;}
+  .detail-item .val.empty{color:var(--text-muted);font-weight:400;font-style:italic;}
+  .radio-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:6px;}
+  .radio-row label{display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px;color:var(--text);cursor:pointer;}
+  .radio-row input{width:auto;}
+  @media (max-width:720px){
+    .grid,.grid3,.detail-grid{grid-template-columns:1fr;}
+    .detail-item{border-right:none !important;}
+    main{padding:16px;}
+    .topbar{padding:14px;}
+  }
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{position:absolute;left:0;top:0;width:100%;}
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+  "use strict";
+
+  const DEFAULT_TAHAPAN = ['Validasi Proses 1','Validasi Proses 2','Validasi Proses 3','Validasi Proses 4','Validasi Proses 5','Validasi Proses 6'];
+
+  const DYNAMIC_TABLES = [
+    { key:'formula', title:'Formula', columns:[
+      {field:'kodeBahanBaku', label:'Kode Bahan Baku', type:'text'},
+      {field:'konsentrasiPercent', label:'Konsentrasi (%)', type:'text'},
+      {field:'jumlahG', label:'Jumlah (g)', type:'text'},
+    ]},
+    { key:'spesifikasiBahanBaku', title:'Spesifikasi Bahan Baku', columns:[
+      {field:'kodeBahan', label:'Kode Bahan', type:'externalBahanBaku'},
+      {field:'namaDagang', label:'Nama Dagang', type:'text'},
+      {field:'namaProdusen', label:'Nama Produsen', type:'text'},
+      {field:'namaSupplier', label:'Nama Supplier', type:'text'},
+      {field:'noDokumen', label:'Nomor Dokumen', type:'text'},
+    ]},
+    { key:'peralatanDetail', title:'Peralatan (Diisi Setelah Sudah Fix)', columns:[
+      {field:'namaAlat', label:'Peralatan', type:'select', cat:'peralatan'},
+      {field:'nomorInventaris', label:'Nomor Inventaris', type:'text'},
+      {field:'tanggalKalibrasi', label:'Tanggal Kalibrasi/Kualifikasi', type:'date'},
+    ]},
+    { key:'saranaPenunjang', title:'Sarana Penunjang (Diisi Setelah Sudah Fix)', columns:[
+      {field:'peralatan', label:'Peralatan', type:'select', cat:'utilitas'},
+      {field:'jenisDokumen', label:'Jenis Dokumen', type:'fixedselect', options:['IQ','OQ','PQ']},
+      {field:'nomorDokumenReferensi', label:'Nomor Dokumen Referensi', type:'text'},
+      {field:'tanggal', label:'Tanggal', type:'date'},
+    ]},
+    { key:'cpp', title:'CPP — Critical Process Parameter', columns:[
+      {field:'tahapanProses', label:'Tahapan Proses', type:'select', cat:'cppTahapan'},
+      {field:'parameterKritis', label:'Parameter Kritis (CPP)', type:'select', cat:'cppParameter'},
+      {field:'targetBatasKendali', label:'Target/Batas Kendali', type:'text'},
+      {field:'hasilAktual', label:'Hasil Aktual', type:'text'},
+      {field:'status', label:'Status', type:'fixedselect', options:['OK','Not OK']},
+      {field:'keterangan', label:'Keterangan', type:'text'},
+      {field:'pic', label:'PIC', type:'text'},
+    ]},
+    { key:'pengujianSampling', title:'Pengujian Sampling', columns:[
+      {field:'titikSampling', label:'Titik Sampling', type:'text'},
+      {field:'keterangan', label:'Keterangan', type:'text'},
+      {field:'bobotPengambilan', label:'Bobot Pengambilan', type:'text'},
+      {field:'petugas', label:'Petugas', type:'text'},
+      {field:'ipc', label:'IPC', type:'text'},
+    ]},
+    { key:'cqaTable', title:'CQA — Critical Quality Attribute', columns:[
+      {field:'parameterCQA', label:'Parameter CQA', type:'select', cat:'cqaParameter'},
+      {field:'spesifikasi', label:'Spesifikasi', type:'text'},
+      {field:'hasilAktual', label:'Hasil Aktual', type:'text'},
+      {field:'status', label:'Status', type:'fixedselect', options:['MS','TMS']},
+      {field:'pic', label:'PIC', type:'text'},
+      {field:'keterangan', label:'Keterangan', type:'text'},
+    ]},
+  ];
+
+  let state = {
+    siteLoggedIn: false, siteLoginError: '',
+    tab: 'master',
+    products: [], lockqa: [],
+    categories: { merk:[], namaProduk:[], batchSize:[], lokasiProduksi:[], mesin:[], peralatan:[], utilitas:[], tahapan:[], cppTahapan:[], cppParameter:[], cqaParameter:[] },
+    loading: true,
+    drawerOpen: false, editingProduct: null,
+    lockLoggedIn: false, lockLoginError: '', lockDrawerOpen: false, editingLock: null,
+    toast: null,
+    scriptUrl: '',
+    settingsOpen: false, settingsUnlocked: false, settingsPassError: '', revealSecrets: false,
+    syncing: false, syncError: '',
+    searchQuery: '',
+    categoryModalOpen: false,
+    externalLists: { bahanBaku:[], produkRuahan:[], produkJadi:[], dpi:[], ppi:[], cpb:[] },
+    detailProductName: '',
+  };
+
+  const uid = () => 'p_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+
+  function showToast(msg){ state.toast = msg; render(); setTimeout(()=>{ state.toast = null; render(); }, 2600); }
+
+  /* ---------------- SYNC LAYER ---------------- */
+  /* Penyimpanan konfigurasi yang bekerja baik di dalam Claude (window.storage)
+     maupun saat di-hosting sendiri di luar Claude (GitHub Pages, Netlify, dll)
+     dengan fallback ke localStorage biasa. */
+  const hasClaudeStorage = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function');
+
+  async function configGet(key){
+    if(hasClaudeStorage){
+      try{ const r = await window.storage.get(key, true); return r ? r.value : ''; }catch(e){ return ''; }
+    }
+    try{ return localStorage.getItem(key) || ''; }catch(e){ return ''; }
+  }
+
+  async function configSet(key, value){
+    if(hasClaudeStorage){
+      try{ await window.storage.set(key, value, true); return; }catch(e){ /* fall through */ }
+    }
+    try{ localStorage.setItem(key, value); }catch(e){ /* storage unavailable, ignore */ }
+  }
+
+  async function loadScriptUrlConfig(){
+    state.scriptUrl = await configGet('sheets-script-url');
+  }
+
+  async function loadAll(){
+    state.loading = true; render();
+    await loadScriptUrlConfig();
+    if(!state.scriptUrl){ state.loading = false; render(); return; }
+    await refreshFromSheet();
+    state.loading = false; render();
+  }
+
+  async function checkPassword(type, password){
+    if(!state.scriptUrl) return null;
+    try{
+      const res = await fetch(state.scriptUrl, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'checkPassword', type, password }) });
+      const json = await res.json();
+      if(json && json.ok) return !!json.valid;
+      return null;
+    }catch(e){ return null; }
+  }
+
+  async function refreshFromSheet(){
+    if(!state.scriptUrl) return;
+    state.syncing = true; state.syncError=''; render();
+    try{
+      const res = await fetch(state.scriptUrl, { method:'GET' });
+      const data = await res.json();
+      if(data && data.ok){
+        state.products = data.products || [];
+        state.lockqa = data.lockqa || [];
+        const defaults = { merk:[], namaProduk:[], batchSize:[], lokasiProduksi:[], mesin:[], peralatan:[], utilitas:[], tahapan:[], cppTahapan:[], cppParameter:[], cqaParameter:[] };
+        state.categories = Object.assign(defaults, data.categories || {});
+        state.externalLists = Object.assign({ bahanBaku:[], produkRuahan:[], produkJadi:[], dpi:[], ppi:[], cpb:[] }, data.externalLists || {});
+      } else {
+        state.syncError = (data && data.error) || 'Gagal memuat data dari Sheet.';
+      }
+    }catch(e){ state.syncError = 'Tidak bisa terhubung ke Google Sheets. Periksa URL Apps Script.'; }
+    state.syncing = false; render();
+  }
+
+  async function postToSheet(action, data){
+    if(!state.scriptUrl){ showToast('Atur URL Apps Script dulu di ⚙ Pengaturan.'); return false; }
+    state.syncing = true; render();
+    try{
+      const res = await fetch(state.scriptUrl, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action, data }) });
+      const json = await res.json();
+      state.syncing = false;
+      if(!json || !json.ok){ showToast('Gagal sync ke Sheet: ' + ((json&&json.error)||'unknown error')); return false; }
+      return true;
+    }catch(e){ state.syncing = false; showToast('Gagal terhubung ke Google Sheets.'); return false; }
+  }
+
+  async function saveProducts(){ await postToSheet('saveProducts', state.products); }
+  async function saveLockQA(){ await postToSheet('saveLockQA', state.lockqa); }
+  async function saveCategories(){ await postToSheet('saveCategories', state.categories); }
+  async function saveScriptConfig(url){
+    state.scriptUrl = url.trim();
+    try{ await configSet('sheets-script-url', state.scriptUrl); }catch(e){}
+    if(state.scriptUrl){ await refreshFromSheet(); }
+  }
+
+  /* ---------------- HELPERS ---------------- */
+  function emptyRowFor(cfg){ const row={}; cfg.columns.forEach(c=>row[c.field]=''); return row; }
+
+  function emptyProduct(){
+    const p = {
+      id: uid(), _kodeAuto: true,
+      tanggalIsi:'', kode:'', merk:'', namaProduk:'', namaProdukLengkapOverride:'',
+      nomorBatchLaporan:'', bentukSediaan:'', batchSize:'', lokasiProduksi:'', mesin:'', tanggalProduksi:'',
+      jadwal: [ {tahapan:'Validasi Proses 1', tanggal:'', nomorBatch:''} ],
+      keteranganValidasi:'',
+      dpi:'', ppi:'', spesifikasiRuahan:'', cpb:'', spesifikasiProdukJadi:'',
+      tanggalSampling:'',
+      yieldData: {bobotTeoritis:'', bobotAktual:'', selisih:'', rekonsiliasi:'', keterangan:''},
+      kondisiRuangan: {
+        penimbangan: {suhu:'', rh:'', kebersihanArea:'', kebersihanMesin:'', diperiksaOleh:''},
+        pengolahan: {suhu:'', rh:'', kebersihanArea:'', kebersihanMesin:'', diperiksaOleh:''}
+      },
+      hasilValidasi: {
+        cpp: {kriteria:'', hasilAktual:'', status:'', pemeriksa:''},
+        cqa: {kriteria:'', hasilAktual:'', status:'', pemeriksa:''},
+        yieldRow: {kriteria:'', hasilAktual:'', status:'', pemeriksa:''},
+        deviasi: {kriteria:'', hasilAktual:'', status:'', pemeriksa:''}
+      },
+      evaluasiKesimpulan:'', rekomendasi:'',
+      alurProsesTahapan: ['']
+    };
+    DYNAMIC_TABLES.forEach(cfg=>{ p[cfg.key] = [emptyRowFor(cfg)]; });
+    return p;
+  }
+
+  function ensureExtraSections(product){
+    DYNAMIC_TABLES.forEach(cfg=>{
+      if(!Array.isArray(product[cfg.key]) || product[cfg.key].length===0) product[cfg.key] = [emptyRowFor(cfg)];
+    });
+    if(!Array.isArray(product.alurProsesTahapan) || product.alurProsesTahapan.length===0) product.alurProsesTahapan = [''];
+    if(!product.yieldData) product.yieldData = {bobotTeoritis:'', bobotAktual:'', selisih:'', rekonsiliasi:'', keterangan:''};
+    if(!product.kondisiRuangan) product.kondisiRuangan = { penimbangan:{suhu:'',rh:'',kebersihanArea:'',kebersihanMesin:'',diperiksaOleh:''}, pengolahan:{suhu:'',rh:'',kebersihanArea:'',kebersihanMesin:'',diperiksaOleh:''} };
+    if(!product.hasilValidasi) product.hasilValidasi = {
+      cpp:{kriteria:'',hasilAktual:'',status:'',pemeriksa:''}, cqa:{kriteria:'',hasilAktual:'',status:'',pemeriksa:''},
+      yieldRow:{kriteria:'',hasilAktual:'',status:'',pemeriksa:''}, deviasi:{kriteria:'',hasilAktual:'',status:'',pemeriksa:''}
+    };
+    if(product.evaluasiKesimpulan===undefined) product.evaluasiKesimpulan = '';
+    if(product.cpb===undefined) product.cpb = '';
+    if(product.spesifikasiProdukJadi===undefined) product.spesifikasiProdukJadi = '';
+    if(product.rekomendasi===undefined) product.rekomendasi = '';
+  }
+
+  function fullName(p){
+    if(p.namaProdukLengkapOverride && p.namaProdukLengkapOverride.trim()) return p.namaProdukLengkapOverride;
+    return [p.merk, p.namaProduk].filter(Boolean).join(' ');
+  }
+
+  function numberToLetters(n){ let s=''; while(n>0){ n--; s=String.fromCharCode(65+(n%26))+s; n=Math.floor(n/26);} return s; }
+
+  function computeAutoKode(namaProduk, excludeId){
+    const key = String(namaProduk||'').trim().toLowerCase();
+    if(!key) return '';
+    const relevant = state.products.filter(p => p.id !== excludeId);
+    const order = [];
+    relevant.forEach(p=>{ const k = String(p.namaProduk||'').trim().toLowerCase(); if(k && !order.includes(k)) order.push(k); });
+    let idx = order.indexOf(key); let isNewGroup = false;
+    if(idx === -1){ idx = order.length; isNewGroup = true; }
+    const letter = numberToLetters(idx + 1);
+    const countInGroup = relevant.filter(p => String(p.namaProduk||'').trim().toLowerCase() === key).length;
+    const number = isNewGroup ? 1 : countInGroup + 1;
+    return letter + number;
+  }
+
+  function tahapanOptions(){ return (state.categories.tahapan && state.categories.tahapan.length) ? state.categories.tahapan : DEFAULT_TAHAPAN; }
+
+  function syncJadwalWithTahapanOptions(product){
+    const opts = tahapanOptions();
+    const existing = product.jadwal || [];
+    product.jadwal = opts.map(t => {
+      const found = existing.find(j => String(j.tahapan||'').trim().toLowerCase() === t.trim().toLowerCase());
+      return { tahapan: t, tanggal: found ? found.tanggal : '', nomorBatch: found ? (found.nomorBatch||'') : '' };
+    });
+  }
+
+  function lockStatusFor(productId){
+    const related = state.lockqa.filter(r => r.kodeId === productId);
+    if(related.length === 0) return { label:'Belum ada pengajuan', cls:'st-none', related };
+    const hasAcc = related.some(r=>r.status==='Acc Supervisor QA');
+    const hasReject = related.some(r=>r.status==='Ditolak');
+    if(hasAcc) return { label:'Acc Supervisor QA', cls:'st-acc', related };
+    if(hasReject && related.every(r=>r.status==='Ditolak')) return { label:'Ditolak', cls:'st-reject', related };
+    return { label:'Menunggu', cls:'st-wait', related };
+  }
+
+  function matchesSearch(p, q){
+    if(!q) return true;
+    const hay = [p.kode, p.merk, p.namaProduk, fullName(p), p.batchSize, p.lokasiProduksi, p.mesin, p.dpi, p.ppi, p.spesifikasiRuahan, p.keteranganValidasi, p.nomorBatchLaporan, p.bentukSediaan].join(' ').toLowerCase();
+    return hay.includes(q.toLowerCase());
+  }
+
+  function escapeHtml(str){ return String(str==null?'':str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function escAttr(str){ return escapeHtml(str); }
+
+  function optionsHtml(list, selected, addNewLabel){
+    let html = `<option value="">— pilih —</option>`;
+    (list||[]).forEach(v=>{ html += `<option value="${escAttr(v)}" ${selected===v?'selected':''}>${escapeHtml(v)}</option>`; });
+    html += `<option value="__add_new__">${addNewLabel || '+ Tambah baru…'}</option>`;
+    return html;
+  }
+  function optionsHtmlFixed(options, selected){
+    let html = `<option value="">— pilih —</option>`;
+    (options||[]).forEach(v=>{ html += `<option value="${escAttr(v)}" ${selected===v?'selected':''}>${escapeHtml(v)}</option>`; });
+    return html;
+  }
+
+  function externalDocOptionsHtml(list, selectedValue){
+    let html = `<option value="">— pilih —</option>`;
+    (list||[]).forEach(item=>{
+      const label = `${item.nama} — ${item.dokumen}`;
+      html += `<option value="${escAttr(item.dokumen)}" ${selectedValue===item.dokumen?'selected':''}>${escapeHtml(label)}</option>`;
+    });
+    if(selectedValue && !(list||[]).some(i=>i.dokumen===selectedValue)){
+      html += `<option value="${escAttr(selectedValue)}" selected>${escapeHtml(selectedValue)} (manual)</option>`;
+    }
+    html += `<option value="__manual__">+ Isi manual…</option>`;
+    return html;
+  }
+
+  function externalBahanBakuOptionsHtml(list, selectedKode){
+    let html = `<option value="">— pilih —</option>`;
+    (list||[]).forEach(item=>{
+      const label = `${item.kode} — ${item.nama}`;
+      html += `<option value="${escAttr(item.kode)}" ${selectedKode===item.kode?'selected':''}>${escapeHtml(label)}</option>`;
+    });
+    if(selectedKode && !(list||[]).some(i=>i.kode===selectedKode)){
+      html += `<option value="${escAttr(selectedKode)}" selected>${escapeHtml(selectedKode)} (manual)</option>`;
+    }
+    html += `<option value="__manual__">+ Isi manual…</option>`;
+    return html;
+  }
+
+  function getNested(obj, path){ return path.split('.').reduce((o,k)=> (o==null?o:o[k]), obj); }
+  function setNested(obj, path, val){
+    const parts = path.split('.'); let o = obj;
+    for(let i=0;i<parts.length-1;i++){ o = o[parts[i]]; }
+    o[parts[parts.length-1]] = val;
+  }
+
+  function categoryLabel(type){
+    return {
+      merk:'Merk', namaProduk:'Nama Produk', batchSize:'Batch Size (kg)', lokasiProduksi:'Lokasi Produksi',
+      mesin:'Mesin', peralatan:'Peralatan', utilitas:'Utilitas', tahapan:'Tahapan Pilot/Validasi',
+      cppTahapan:'CPP — Tahapan Proses', cppParameter:'CPP — Parameter Kritis', cqaParameter:'CQA — Parameter CQA'
+    }[type] || type;
+  }
+
+  function renderDynColCell(cfg, col, row, idx){
+    const val = row[col.field]||'';
+    if(col.type==='select'){
+      return `<td><select data-dyn="${cfg.key}:${col.field}" data-idx="${idx}">${optionsHtml(state.categories[col.cat], val)}</select></td>`;
+    }
+    if(col.type==='fixedselect'){
+      return `<td><select data-dyn="${cfg.key}:${col.field}" data-idx="${idx}">${optionsHtmlFixed(col.options, val)}</select></td>`;
+    }
+    if(col.type==='externalBahanBaku'){
+      return `<td><select data-dyn="${cfg.key}:${col.field}" data-idx="${idx}">${externalBahanBakuOptionsHtml(state.externalLists.bahanBaku, val)}</select></td>`;
+    }
+    const inputType = col.type==='date' ? 'date' : 'text';
+    return `<td><input type="${inputType}" data-dyn="${cfg.key}:${col.field}" data-idx="${idx}" value="${escAttr(val)}"></td>`;
+  }
+
+  function renderDynTableSection(product, cfg, num){
+    const rows = product[cfg.key].map((row,i)=>{
+      const cells = cfg.columns.map(col=>renderDynColCell(cfg, col, row, i)).join('');
+      return `<tr><td style="width:30px;text-align:center;color:var(--text-muted);font-size:12px">${i+1}</td>${cells}<td style="width:36px"><button class="row-remove" data-action="remove-dyn-row" data-table="${cfg.key}" data-idx="${i}">✕</button></td></tr>`;
+    }).join('');
+    const headers = `<th style="width:30px">No.</th>` + cfg.columns.map(c=>`<th>${c.label}</th>`).join('') + `<th></th>`;
+    return `
+      <div class="section-title"><span class="n">${num}</span> ${cfg.title}</div>
+      <div class="table-wrap"><table class="mini-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>
+      <button class="add-row-btn" data-action="add-dyn-row" data-table="${cfg.key}">+ Tambah Baris</button>
+    `;
+  }
+
+  function renderDynTableView(product, cfg){
+    const list = (product[cfg.key]||[]).filter(row => cfg.columns.some(c=>row[c.field]));
+    const rows = list.map((row,i)=>{
+      const cells = cfg.columns.map(c=>`<td>${escapeHtml(row[c.field]||'-')}</td>`).join('');
+      return `<tr><td>${i+1}</td>${cells}</tr>`;
+    }).join('') || `<tr><td colspan="${cfg.columns.length+1}" style="color:var(--text-muted)">Belum ada data.</td></tr>`;
+    const headers = `<th>No.</th>` + cfg.columns.map(c=>`<th>${c.label}</th>`).join('');
+    return `<div class="section-title">${cfg.title}</div><div class="table-wrap"><table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  function escapeSvgText(s){ const t = String(s).length>36 ? String(s).slice(0,35)+'…' : String(s); return escapeHtml(t); }
+
+  function buildFlowchartSVG(steps){
+    const valid = (steps||[]).filter(s=>s && s.trim());
+    if(valid.length===0) return `<div class="hint">Belum ada tahapan diisi.</div>`;
+    const boxW=300, boxH=54, gapY=34, padX=16, padY=16;
+    const totalH = valid.length*boxH + (valid.length-1)*gapY + padY*2;
+    const totalW = boxW + padX*2;
+    let svg = `<svg viewBox="0 0 ${totalW} ${totalH}" width="100%" style="max-width:440px;display:block" xmlns="http://www.w3.org/2000/svg">`;
+    svg += `<defs><marker id="flowArrow" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0F5C5C"/></marker></defs>`;
+    valid.forEach((step,i)=>{
+      const y = padY + i*(boxH+gapY);
+      svg += `<rect x="${padX}" y="${y}" width="${boxW}" height="${boxH}" rx="10" fill="#E4EFEE" stroke="#0F5C5C" stroke-width="1.5"/>`;
+      svg += `<text x="${padX+boxW/2}" y="${y+boxH/2+5}" text-anchor="middle" font-size="13" font-family="IBM Plex Sans, sans-serif" fill="#0A4141">${escapeSvgText(step)}</text>`;
+      if(i < valid.length-1){
+        const x = padX+boxW/2;
+        svg += `<line x1="${x}" y1="${y+boxH}" x2="${x}" y2="${y+boxH+gapY-2}" stroke="#0F5C5C" stroke-width="2" marker-end="url(#flowArrow)"/>`;
+      }
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  function renderFlowchartStepsSection(p, num){
+    const rows = p.alurProsesTahapan.map((step,i)=>`
+      <tr>
+        <td style="width:30px;text-align:center;color:var(--text-muted);font-size:12px">${i+1}</td>
+        <td><input type="text" data-flow-idx="${i}" value="${escAttr(step)}" placeholder="mis. Penimbangan bahan baku"></td>
+        <td style="width:36px"><button class="row-remove" data-action="remove-flow-step" data-idx="${i}">✕</button></td>
+      </tr>
+    `).join('');
+    return `
+      <div class="section-title"><span class="n">${num}</span> Bagan Alur Proses</div>
+      <p class="hint">Isi tiap tahapan secara berurutan — otomatis digambar jadi bagan alur di bawah.</p>
+      <table class="mini-table"><thead><tr><th style="width:30px">No.</th><th>Tahapan</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+      <button class="add-row-btn" data-action="add-flow-step">+ Tambah Tahapan</button>
+      <div id="flowchartPreview" style="margin-top:16px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px">${buildFlowchartSVG(p.alurProsesTahapan)}</div>
+    `;
+  }
+
+  function renderFixedFieldsGroup(title, basePath, product, fields){
+    const inputs = fields.map(f=>{
+      const path = basePath + '.' + f.field;
+      const val = getNested(product, path) || '';
+      return `<div class="field"><label>${f.label}</label><input type="text" data-nested="${path}" value="${escAttr(val)}"></div>`;
+    }).join('');
+    return `<div style="margin-bottom:16px"><div style="font-weight:600;font-size:13px;margin-bottom:8px">${title}</div><div class="grid3">${inputs}</div></div>`;
+  }
+
+  /* ============================================================
+     EXPORT KE WORD (.docx) & PDF (cetak browser)
+     ============================================================ */
+  function buildReportSections(p){
+    const rowsFrom = (list, cfg) => (list||[]).filter(r=>cfg.columns.some(c=>r[c.field]))
+      .map((r,i)=>[String(i+1)].concat(cfg.columns.map(c=>r[c.field]||'')));
+
+    const cfgFormula = DYNAMIC_TABLES[0], cfgSpes = DYNAMIC_TABLES[1], cfgPeralatan = DYNAMIC_TABLES[2],
+      cfgSarana = DYNAMIC_TABLES[3], cfgCpp = DYNAMIC_TABLES[4], cfgSampling = DYNAMIC_TABLES[5], cfgCqa = DYNAMIC_TABLES[6];
+
+    const kr = p.kondisiRuangan || {penimbangan:{},pengolahan:{}};
+    const y = p.yieldData || {};
+    const hv = p.hasilValidasi || {};
+
+    return {
+      header: {
+        namaProduk: fullName(p), nomorBatch: p.nomorBatchLaporan, bentukSediaan: p.bentukSediaan,
+        batchSize: p.batchSize, lokasi: p.lokasiProduksi, tanggalProduksi: p.tanggalProduksi
+      },
+      A: { title:'Formula', headers:['No.','Kode Bahan Baku','Konsentrasi (%)','Jumlah (g)'], rows: rowsFrom(p.formula, cfgFormula) },
+      B: { title:'Spesifikasi Bahan Baku', headers:['No.','Kode Bahan','Nama Dagang','Nama Produsen','Nama Supplier','Nomor Dokumen'], rows: rowsFrom(p.spesifikasiBahanBaku, cfgSpes) },
+      C: { title:'Peralatan', headers:['No.','Peralatan','Nomor Inventaris','Tanggal Kalibrasi/Kualifikasi'], rows: rowsFrom(p.peralatanDetail, cfgPeralatan) },
+      D: { title:'Sarana Penunjang', headers:['No.','Peralatan','Jenis Dokumen','Nomor Dokumen Referensi','Tanggal'], rows: rowsFrom(p.saranaPenunjang, cfgSarana) },
+      E: { title:'Kondisi Ruangan', headers:['Ruangan','Suhu (°C)','RH (%)','Kebersihan Area','Kebersihan Mesin','Diperiksa Oleh'],
+        rows:[
+          ['Penimbangan', kr.penimbangan.suhu||'', kr.penimbangan.rh||'', kr.penimbangan.kebersihanArea||'', kr.penimbangan.kebersihanMesin||'', kr.penimbangan.diperiksaOleh||''],
+          ['Pengolahan', kr.pengolahan.suhu||'', kr.pengolahan.rh||'', kr.pengolahan.kebersihanArea||'', kr.pengolahan.kebersihanMesin||'', kr.pengolahan.diperiksaOleh||''],
+        ] },
+      F: { title:'Bagan Alur Proses', steps: (p.alurProsesTahapan||[]).filter(s=>s&&s.trim()) },
+      G: { title:'Critical Process Parameter (CPP)', headers:['No.','Tahapan Proses','Parameter Kritis (CPP)','Target/Batas Kendali','Hasil Aktual','Status','Keterangan','PIC'], rows: rowsFrom(p.cpp, cfgCpp) },
+      H: { title:'Pengujian Sampling', tanggalSampling: p.tanggalSampling, headers:['No.','Titik Sampling','Keterangan','Bobot Pengambilan','Petugas','IPC'], rows: rowsFrom(p.pengujianSampling, cfgSampling) },
+      I: { title:'Critical Quality Atribute (CQA)', headers:['No.','Parameter CQA','Spesifikasi','Hasil Aktual','Status','PIC','Keterangan'], rows: rowsFrom(p.cqaTable, cfgCqa) },
+      J: { title:'Perhitungan Yield', headers:['Parameter','Hasil','Keterangan'],
+        rows:[
+          ['Bobot Teoritis', y.bobotTeoritis||'', ''],
+          ['Bobot Aktual', y.bobotAktual||'', ''],
+          ['Selisih', y.selisih||'', ''],
+          ['Rekonsiliasi (%)', y.rekonsiliasi||'', y.keterangan||''],
+        ] },
+      K: { title:'Hasil Validasi Proses', headers:['Parameter','Kriteria','Hasil Aktual','Status','Pemeriksa'],
+        rows:[
+          ['CPP', hv.cpp.kriteria||'', hv.cpp.hasilAktual||'', hv.cpp.status||'', hv.cpp.pemeriksa||''],
+          ['CQA', hv.cqa.kriteria||'', hv.cqa.hasilAktual||'', hv.cqa.status||'', hv.cqa.pemeriksa||''],
+          ['Yield', hv.yieldRow.kriteria||'', hv.yieldRow.hasilAktual||'', hv.yieldRow.status||'', hv.yieldRow.pemeriksa||''],
+          ['Deviasi', hv.deviasi.kriteria||'', hv.deviasi.hasilAktual||'', hv.deviasi.status||'', hv.deviasi.pemeriksa||''],
+        ] },
+      evaluasiKesimpulan: p.evaluasiKesimpulan || '',
+      rekomendasi: p.rekomendasi || '',
+      kode: p.kode, keteranganValidasi: p.keteranganValidasi || ''
+    };
+  }
+
+  /* ---- Word (.docx) ---- */
+  function escapeXml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
+
+  function docxPara(text, opts){
+    opts = opts || {};
+    const bold = opts.bold ? '<w:b/>' : '';
+    const sz = opts.size ? `<w:sz w:val="${opts.size}"/>` : '';
+    const align = opts.align ? `<w:jc w:val="${opts.align}"/>` : '';
+    const spacing = `<w:spacing w:before="${opts.before||60}" w:after="${opts.after||60}"/>`;
+    return `<w:p><w:pPr>${spacing}${align}</w:pPr><w:r><w:rPr>${bold}${sz}</w:rPr><w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r></w:p>`;
+  }
+
+  function docxCell(text, opts){
+    opts = opts || {};
+    return `<w:tc><w:tcPr><w:tcW w:w="${opts.width||1500}" w:type="dxa"/>${opts.shade?`<w:shd w:val="clear" w:fill="E4EFEE"/>`:''}</w:tcPr>${docxPara(text,{bold:opts.bold, size:18, before:20, after:20})}</w:tc>`;
+  }
+
+  function docxTable(headers, rows){
+    const totalWidth = 9350;
+    const colW = Math.floor(totalWidth/headers.length);
+    const borders = `<w:tblBorders>
+      <w:top w:val="single" w:sz="4" w:color="000000"/><w:left w:val="single" w:sz="4" w:color="000000"/>
+      <w:bottom w:val="single" w:sz="4" w:color="000000"/><w:right w:val="single" w:sz="4" w:color="000000"/>
+      <w:insideH w:val="single" w:sz="4" w:color="000000"/><w:insideV w:val="single" w:sz="4" w:color="000000"/>
+    </w:tblBorders>`;
+    let xml = `<w:tbl><w:tblPr><w:tblW w:w="${totalWidth}" w:type="dxa"/>${borders}</w:tblPr><w:tblGrid>${headers.map(()=>`<w:gridCol w:w="${colW}"/>`).join('')}</w:tblGrid>`;
+    xml += `<w:tr>${headers.map(h=>docxCell(h,{bold:true, width:colW, shade:true})).join('')}</w:tr>`;
+    if(rows.length===0){
+      xml += `<w:tr>${headers.map((h,i)=>docxCell(i===0?'Belum ada data':'', {width:colW})).join('')}</w:tr>`;
+    } else {
+      rows.forEach(row=>{ xml += `<w:tr>${row.map((c,i)=>docxCell(c, {width:colW})).join('')}</w:tr>`; });
+    }
+    xml += `</w:tbl>`;
+    return xml;
+  }
+
+  function buildDocxBodyXml(sections){
+    let body = '';
+    body += docxPara('LAPORAN VALIDASI PROSES', {bold:true, size:28, align:'center', before:0, after:200});
+    body += docxPara('Nama Produk : ' + sections.header.namaProduk, {size:20});
+    body += docxPara('Nomor Batch : ' + sections.header.nomorBatch, {size:20});
+    body += docxPara('Bentuk Sediaan : ' + sections.header.bentukSediaan, {size:20});
+    body += docxPara('Batch Size : ' + sections.header.batchSize, {size:20});
+    body += docxPara('Lokasi : ' + sections.header.lokasi, {size:20});
+    body += docxPara('Tanggal Produksi : ' + sections.header.tanggalProduksi, {size:20, after:200});
+
+    ['A','B','C','D'].forEach(k=>{
+      const s = sections[k];
+      body += docxPara(k + '. ' + s.title, {bold:true, size:22, before:200});
+      body += docxTable(s.headers, s.rows);
+    });
+
+    const eSec = sections.E;
+    body += docxPara('E. ' + eSec.title, {bold:true, size:22, before:200});
+    body += docxTable(eSec.headers, eSec.rows);
+
+    body += docxPara('F. ' + sections.F.title, {bold:true, size:22, before:200});
+    if(sections.F.steps.length===0){
+      body += docxPara('Belum ada tahapan diisi.', {size:20});
+    } else {
+      sections.F.steps.forEach((step,i)=>{
+        body += docxPara((i+1) + '. ' + step, {size:20});
+        if(i < sections.F.steps.length-1) body += docxPara('↓', {size:20, align:'center'});
+      });
+    }
+
+    ['G'].forEach(k=>{
+      const s = sections[k];
+      body += docxPara(k + '. ' + s.title, {bold:true, size:22, before:200});
+      body += docxTable(s.headers, s.rows);
+    });
+
+    const hSec = sections.H;
+    body += docxPara('H. ' + hSec.title, {bold:true, size:22, before:200});
+    body += docxPara('Nama Produk : ' + sections.header.namaProduk, {size:20});
+    body += docxPara('Tanggal Sampling : ' + (hSec.tanggalSampling||''), {size:20});
+    body += docxTable(hSec.headers, hSec.rows);
+
+    ['I','J','K'].forEach(k=>{
+      const s = sections[k];
+      body += docxPara(k + '. ' + s.title, {bold:true, size:22, before:200});
+      body += docxTable(s.headers, s.rows);
+    });
+
+    body += docxPara('Evaluasi dan Kesimpulan:', {bold:true, size:20, before:200});
+    ['Validasi Diterima','Validasi Ditolak','Revalidasi'].forEach(opt=>{
+      body += docxPara((sections.evaluasiKesimpulan===opt?'☑ ':'☐ ') + opt, {size:20});
+    });
+    body += docxPara('Rekomendasi:', {bold:true, size:20, before:200});
+    body += docxPara(sections.rekomendasi || '-', {size:20});
+
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body>
+</w:document>`;
+  }
+
+  const DOCX_CONTENT_TYPES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>`;
+
+  const DOCX_RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`;
+
+  const DOCX_DOCUMENT_RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const DOCX_STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="20"/></w:rPr></w:rPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>
+</w:styles>`;
+
+  const DOCX_CORE = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<dc:title>Laporan Validasi Proses</dc:title><dc:creator>Validasi Proses Mixing</dc:creator>
+</cp:coreProperties>`;
+
+  const DOCX_APP = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
+<Application>Validasi Proses Mixing</Application>
+</Properties>`;
+
+  async function downloadDocx(p){
+    if(typeof JSZip === 'undefined'){ showToast('Gagal memuat pustaka Word (JSZip). Periksa koneksi internet.'); return; }
+    const sections = buildReportSections(p);
+    const documentXml = buildDocxBodyXml(sections);
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', DOCX_CONTENT_TYPES);
+    zip.folder('_rels').file('.rels', DOCX_RELS);
+    zip.folder('docProps').file('core.xml', DOCX_CORE);
+    zip.file('docProps/app.xml', DOCX_APP);
+    const wordFolder = zip.folder('word');
+    wordFolder.file('document.xml', documentXml);
+    wordFolder.file('styles.xml', DOCX_STYLES);
+    wordFolder.folder('_rels').file('document.xml.rels', DOCX_DOCUMENT_RELS);
+    const blob = await zip.generateAsync({type:'blob'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Laporan Validasi Proses - ' + (p.kode||'produk') + '.docx';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /* ---- PDF (cetak browser) ---- */
+  function htmlTable(headers, rows){
+    const th = headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('');
+    const trs = rows.length ? rows.map(r=>`<tr>${r.map(c=>`<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${headers.length}" style="color:#888">Belum ada data</td></tr>`;
+    return `<table style="width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:11px"><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`;
+  }
+
+  function buildPrintHtml(p){
+    const s = buildReportSections(p);
+    let body = `
+      <h1 style="text-align:center;font-size:18px">LAPORAN VALIDASI PROSES</h1>
+      <p>Nama Produk : ${escapeHtml(s.header.namaProduk)}</p>
+      <p>Nomor Batch : ${escapeHtml(s.header.nomorBatch)}</p>
+      <p>Bentuk Sediaan : ${escapeHtml(s.header.bentukSediaan)}</p>
+      <p>Batch Size : ${escapeHtml(s.header.batchSize)}</p>
+      <p>Lokasi : ${escapeHtml(s.header.lokasi)}</p>
+      <p>Tanggal Produksi : ${escapeHtml(s.header.tanggalProduksi)}</p>
+    `;
+    ['A','B','C','D'].forEach(k=>{ body += `<h3>${k}. ${escapeHtml(s[k].title)}</h3>` + htmlTable(s[k].headers, s[k].rows); });
+    body += `<h3>E. ${escapeHtml(s.E.title)}</h3>` + htmlTable(s.E.headers, s.E.rows);
+    body += `<h3>F. ${escapeHtml(s.F.title)}</h3>`;
+    if(s.F.steps.length===0){ body += `<p style="color:#888">Belum ada tahapan diisi.</p>`; }
+    else { body += s.F.steps.map((step,i)=>`<p>${i+1}. ${escapeHtml(step)}</p>${i<s.F.steps.length-1?'<p style="text-align:center">↓</p>':''}`).join(''); }
+    body += `<h3>G. ${escapeHtml(s.G.title)}</h3>` + htmlTable(s.G.headers, s.G.rows);
+    body += `<h3>H. ${escapeHtml(s.H.title)}</h3><p>Nama Produk : ${escapeHtml(s.header.namaProduk)}</p><p>Tanggal Sampling : ${escapeHtml(s.H.tanggalSampling||'')}</p>` + htmlTable(s.H.headers, s.H.rows);
+    body += `<h3>I. ${escapeHtml(s.I.title)}</h3>` + htmlTable(s.I.headers, s.I.rows);
+    body += `<h3>J. ${escapeHtml(s.J.title)}</h3>` + htmlTable(s.J.headers, s.J.rows);
+    body += `<h3>K. ${escapeHtml(s.K.title)}</h3>` + htmlTable(s.K.headers, s.K.rows);
+    body += `<h3>Evaluasi dan Kesimpulan:</h3>`;
+    ['Validasi Diterima','Validasi Ditolak','Revalidasi'].forEach(opt=>{
+      body += `<p>${s.evaluasiKesimpulan===opt?'☑':'☐'} ${opt}</p>`;
+    });
+    body += `<h3>Rekomendasi:</h3><p>${escapeHtml(s.rekomendasi||'-')}</p>`;
+
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Validasi Proses - ${escapeHtml(p.kode||'')}</title>
+    <style>
+      body{font-family:Calibri,Arial,sans-serif;font-size:13px;color:#111;padding:24px;}
+      h1,h3{margin:14px 0 6px;}
+      table{border:1px solid #333;}
+      th,td{border:1px solid #333;padding:4px 6px;text-align:left;vertical-align:top;}
+      th{background:#eee;}
+      @media print{ body{padding:0;} }
+    </style></head><body>${body}
+    <script>window.onload=function(){ setTimeout(function(){ window.print(); }, 300); };<\/script>
+    </body></html>`;
+  }
+
+  function printAsPdf(p){
+    const html = buildPrintHtml(p);
+    const win = window.open('', '_blank');
+    if(!win){ showToast('Popup diblokir browser. Izinkan popup untuk situs ini lalu coba lagi.'); return; }
+    win.document.open(); win.document.write(html); win.document.close();
+  }
+
+  /* ---------------- RENDER ---------------- */
+  function render(){
+    const app = document.getElementById('app');
+    if(!state.siteLoggedIn){ app.innerHTML = renderSiteLogin(); attachSiteLoginEvents(); return; }
+    app.innerHTML = `
+      ${topbar()}
+      <main>${state.loading ? '<div class="loading-row">Memuat data…</div>' : renderTabContent()}</main>
+      <div class="footer-note">Validasi Proses Mixing — data tersimpan otomatis &amp; dibagikan ke seluruh tim.</div>
+      ${state.drawerOpen ? renderDrawer() : ''}
+      ${state.settingsOpen ? renderSettingsModal() : ''}
+      ${state.categoryModalOpen ? renderCategoryModal() : ''}
+      ${state.toast ? `<div class="toast">${escapeHtml(state.toast)}</div>` : ''}
+    `;
+    attachEvents();
+  }
+
+  function renderTabContent(){
+    if(state.tab === 'master') return renderMaster();
+    if(state.tab === 'lockqa') return renderLockQA();
+    return renderDetail();
+  }
+
+  function renderSiteLogin(){
+    return `
+    <div class="login-wrap" style="margin-top:110px">
+      <div class="stamp" style="border-color:var(--primary);color:var(--primary)">VPM<br>ACCESS</div>
+      <h2>Masuk — Validasi Proses Mixing</h2>
+      <p>Website internal tim. Masukkan password akses untuk melanjutkan.</p>
+      <input type="password" id="siteLoginInput" placeholder="Password akses">
+      ${state.siteLoginError ? `<div class="login-error">${escapeHtml(state.siteLoginError)}</div>` : ''}
+      <button class="btn btn-primary" style="width:100%;justify-content:center" data-action="site-login">Masuk</button>
+    </div>`;
+  }
+
+  function attachSiteLoginEvents(){
+    const app = document.getElementById('app');
+    const btn = app.querySelector('[data-action="site-login"]');
+    const input = app.querySelector('#siteLoginInput');
+    const submit = async () => {
+      const val = input.value;
+      if(btn) btn.disabled = true;
+      const result = await checkPassword('site', val);
+      if(btn) btn.disabled = false;
+      if(result === true){ state.siteLoggedIn = true; state.siteLoginError=''; loadAll(); }
+      else if(result === false){ state.siteLoginError = 'Password salah. Coba lagi.'; render(); }
+      else { state.siteLoggedIn = true; state.siteLoginError=''; loadAll(); showToast('Belum terhubung ke Google Sheets — password belum aktif. Hubungkan URL Apps Script di ⚙ Pengaturan.'); }
+    };
+    if(btn) btn.onclick = submit;
+    if(input) input.onkeydown = (e) => { if(e.key==='Enter') submit(); };
+  }
+
+  function topbar(){
+    return `
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">VPM</div>
+        <div class="brand-text"><h1>Validasi Proses Mixing</h1><p>Master data produk &amp; persetujuan Lock QA</p></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="tabs">
+          <button class="tab-btn ${state.tab==='master'?'active':''}" data-action="goto-tab" data-tab="master">Data Master</button>
+          <button class="tab-btn ${state.tab==='detail'?'active':''}" data-action="goto-tab" data-tab="detail">Detail Produk</button>
+          <button class="tab-btn ${state.tab==='lockqa'?'active':''}" data-action="goto-tab" data-tab="lockqa">Lock QA</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.25)" data-action="open-settings" title="Pengaturan sinkronisasi Google Sheets">⚙</button>
+      </div>
+    </div>
+    ${state.scriptUrl ? '' : `<div style="background:var(--warn-bg);color:var(--warn);padding:10px 28px;font-size:13px;border-bottom:1px solid #F0DFA9">Belum tersambung ke Google Sheets. Klik <strong>⚙</strong> untuk memasukkan URL Apps Script.</div>`}
+    ${state.syncError ? `<div style="background:var(--danger-bg);color:var(--danger);padding:10px 28px;font-size:13px;border-bottom:1px solid #F3CFCB">${escapeHtml(state.syncError)}</div>` : ''}
+    `;
+  }
+
+  /* ---------- MASTER TAB ---------- */
+  function filteredProducts(){ return state.products.filter(p => matchesSearch(p, state.searchQuery)); }
+
+  function masterRowHtml(p){
+    const st = lockStatusFor(p.id);
+    return `
+    <tr>
+      <td><span class="code-badge">${escapeHtml(p.kode||'-')}</span></td>
+      <td>${escapeHtml(p.tanggalIsi||'-')}</td>
+      <td>${escapeHtml(p.merk||'-')}</td>
+      <td><strong>${escapeHtml(fullName(p)||'-')}</strong></td>
+      <td>${escapeHtml(p.nomorBatchLaporan||'-')}</td>
+      <td>${escapeHtml(p.batchSize||'-')}</td>
+      <td>${escapeHtml(p.lokasiProduksi||'-')}</td>
+      <td>${escapeHtml(p.mesin||'-')}</td>
+      <td class="mono">${escapeHtml(p.dpi||'-')}</td>
+      <td class="mono">${escapeHtml(p.ppi||'-')}</td>
+      <td><span class="badge-status ${st.cls}">${escapeHtml(st.label)}</span></td>
+      <td><div class="actions-cell">
+        <button class="icon-btn" data-action="edit-product" data-id="${p.id}" title="Edit">✎</button>
+        <button class="icon-btn danger" data-action="delete-product" data-id="${p.id}" title="Hapus">🗑</button>
+      </div></td>
+    </tr>`;
+  }
+
+  function buildMasterTableHtml(list){
+    if(state.products.length === 0){
+      return `<div class="empty-state"><div class="icon">🧪</div><h3>Belum ada data produk</h3><p>Klik "Tambah Produk" untuk mulai mengisi validasi proses mixing.</p></div>`;
+    }
+    if(list.length === 0){
+      return `<div class="empty-state"><div class="icon">🔍</div><h3>Tidak ada hasil</h3><p>Coba kata kunci pencarian lain.</p></div>`;
+    }
+    const rows = list.map(masterRowHtml).join('');
+    return `<table><thead><tr>
+      <th>Kode</th><th>Tgl Isi</th><th>Merk</th><th>Nama Produk Lengkap</th><th>Nomor Batch</th>
+      <th>Batch Size</th><th>Lokasi</th><th>Mesin</th><th>DPI</th><th>PPI</th><th>Status Lock QA</th><th>Aksi</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  function renderMaster(){
+    const list = filteredProducts();
+    return `
+      <div class="page-head">
+        <div><h2>Data Master — Produk &amp; Validasi</h2><p>Semua diisi &amp; diedit di sini. Setiap kali disimpan, otomatis tersalin ke Google Sheets.</p></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost" data-action="open-category-modal">🗂 Kelola Kategori</button>
+          <button class="btn btn-ghost" data-action="refresh-sheet" ${state.syncing?'disabled':''}>${state.syncing?'Menyinkronkan…':'⟳ Tarik data terbaru'}</button>
+          <button class="btn btn-primary" data-action="new-product">+ Tambah Produk</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="search-box"><span class="icon">🔍</span><input type="text" id="searchInput" placeholder="Cari nama produk, batch size, lokasi, mesin, dll…" value="${escAttr(state.searchQuery)}"></div>
+        ${state.searchQuery ? `<span style="font-size:12.5px;color:var(--text-muted)">${list.length} dari ${state.products.length} produk cocok</span>` : ''}
+      </div>
+      <div class="card"><div class="table-wrap" id="masterTableWrap">${buildMasterTableHtml(list)}</div></div>
+    `;
+  }
+
+  function refreshMasterTableWrap(){
+    const wrap = document.getElementById('masterTableWrap');
+    if(!wrap) return;
+    const list = filteredProducts();
+    wrap.innerHTML = buildMasterTableHtml(list);
+    attachMasterTableEvents();
+    const toolbar = document.querySelector('.toolbar');
+    if(toolbar){
+      let span = toolbar.querySelector('span');
+      if(state.searchQuery){
+        const text = `${list.length} dari ${state.products.length} produk cocok`;
+        if(span){ span.textContent = text; } else {
+          const s = document.createElement('span'); s.style.fontSize='12.5px'; s.style.color='var(--text-muted)'; s.textContent = text;
+          toolbar.appendChild(s);
+        }
+      } else if(span){ span.remove(); }
+    }
+  }
+
+  function attachMasterTableEvents(){
+    const wrap = document.getElementById('masterTableWrap');
+    if(!wrap) return;
+    wrap.querySelectorAll('[data-action="edit-product"]').forEach(el=>{
+      el.onclick = () => {
+        const orig = state.products.find(x=>x.id===el.dataset.id);
+        state.editingProduct = JSON.parse(JSON.stringify(orig));
+        ensureExtraSections(state.editingProduct);
+        state.drawerOpen = true; render();
+      };
+    });
+    wrap.querySelectorAll('[data-action="delete-product"]').forEach(el=>{
+      el.onclick = async () => {
+        if(!confirm('Hapus data produk ini?')) return;
+        state.products = state.products.filter(x=>x.id!==el.dataset.id);
+        await saveProducts(); showToast('Produk dihapus.'); render();
+      };
+    });
+  }
+
+  /* ---------- PRODUCT DRAWER ---------- */
+  function renderDrawer(){
+    const p = state.editingProduct;
+    const jadwalRows = p.jadwal.map((j,i)=>`
+      <tr>
+        <td style="width:32%">
+          <select data-jadwal="tahapan" data-idx="${i}">${optionsHtml(tahapanOptions(), j.tahapan, '+ Tambah baru (Lainnya)…')}</select>
+        </td>
+        <td style="width:26%"><input type="date" data-jadwal="tanggal" data-idx="${i}" value="${j.tanggal}"></td>
+        <td style="width:30%"><input type="text" data-jadwal="nomorBatch" data-idx="${i}" value="${escAttr(j.nomorBatch)}" placeholder="No. Batch"></td>
+        <td style="width:36px"><button class="row-remove" data-action="remove-jadwal" data-idx="${i}" title="Hapus baris">✕</button></td>
+      </tr>
+    `).join('');
+
+    return `
+    <div class="overlay" data-action="overlay-close">
+      <div class="drawer" data-stop="1">
+        <div class="drawer-head">
+          <h3>${p._isNew ? 'Tambah Produk' : 'Edit Produk'}</h3>
+          <button class="drawer-close" data-action="close-drawer">✕</button>
+        </div>
+        <div class="drawer-body">
+
+          <div class="section-title"><span class="n">1</span> Informasi Umum</div>
+          <div class="grid">
+            <div class="field"><label>Tanggal Isi</label><input type="date" data-field="tanggalIsi" value="${p.tanggalIsi}"></div>
+            <div class="field">
+              <label>Kode ${p._kodeAuto ? '<span style="color:var(--accent);font-weight:600">(otomatis)</span>' : ''}</label>
+              <input type="text" class="mono" data-field="kode" value="${escAttr(p.kode)}" placeholder="Otomatis setelah isi Nama Produk">
+              <div class="hint">Dibuat otomatis dari Nama Produk. ${!p._kodeAuto ? ' <a href="#" data-action="reset-kode-auto" style="color:var(--primary)">Buat ulang otomatis</a>' : ''}</div>
+            </div>
+            <div class="field"><label>Merk</label><select data-field-select="merk">${optionsHtml(state.categories.merk, p.merk)}</select></div>
+            <div class="field"><label>Nama Produk</label><select data-field-select="namaProduk">${optionsHtml(state.categories.namaProduk, p.namaProduk)}</select></div>
+            <div class="field full">
+              <label>Nama Produk Lengkap (otomatis: Merk + Nama Produk)</label>
+              <div class="computed-box">${escapeHtml(fullName(p)) || '—'}</div>
+              <input style="margin-top:8px" type="text" data-field="namaProdukLengkapOverride" value="${escAttr(p.namaProdukLengkapOverride)}" placeholder="Override manual (opsional)">
+            </div>
+            <div class="field"><label>Nomor Batch</label><input type="text" data-field="nomorBatchLaporan" value="${escAttr(p.nomorBatchLaporan)}"></div>
+            <div class="field"><label>Bentuk Sediaan</label><input type="text" data-field="bentukSediaan" value="${escAttr(p.bentukSediaan)}"></div>
+            <div class="field"><label>Batch Size (kg)</label><select data-field-select="batchSize">${optionsHtml(state.categories.batchSize, p.batchSize)}</select></div>
+            <div class="field"><label>Lokasi Produksi</label><select data-field-select="lokasiProduksi">${optionsHtml(state.categories.lokasiProduksi, p.lokasiProduksi)}</select></div>
+            <div class="field"><label>Mesin</label><select data-field-select="mesin">${optionsHtml(state.categories.mesin, p.mesin)}</select></div>
+            <div class="field"><label>Tanggal Produksi</label><input type="date" data-field="tanggalProduksi" value="${p.tanggalProduksi}"></div>
+          </div>
+
+          <div class="section-title"><span class="n">2</span> Kategori Tahapan</div>
+          <table class="mini-table"><thead><tr><th>Tahapan</th><th>Tanggal</th><th>Nomor Batch</th><th></th></tr></thead><tbody>${jadwalRows}</tbody></table>
+          <button class="add-row-btn" data-action="add-jadwal">+ Tambah Jadwal</button>
+          <p class="hint">Pilih tahapan dari dropdown (Validasi Proses 1, 2, dst), atau pilih "+ Tambah baru (Lainnya)…" untuk menambah tahapan kustom.</p>
+          <div class="field full" style="margin-top:14px"><label>Keterangan Validasi</label><textarea data-field="keteranganValidasi">${escapeHtml(p.keteranganValidasi)}</textarea></div>
+
+          <div class="section-title"><span class="n">3</span> Dokumen Acuan</div>
+          <div class="grid">
+            <div class="field"><label>DPI (no. dokumen)</label><select data-field-external="dpi">${externalDocOptionsHtml(state.externalLists.dpi, p.dpi)}</select></div>
+            <div class="field"><label>PPI (no. dokumen)</label><select data-field-external="ppi">${externalDocOptionsHtml(state.externalLists.ppi, p.ppi)}</select></div>
+            <div class="field"><label>CPB — Catatan Pengolahan Batch (no. dokumen)</label><select data-field-external="cpb">${externalDocOptionsHtml(state.externalLists.cpb, p.cpb)}</select></div>
+            <div class="field"><label>Spesifikasi Produk Ruahan (no. dokumen)</label><select data-field-external="spesifikasiRuahan">${externalDocOptionsHtml(state.externalLists.produkRuahan, p.spesifikasiRuahan)}</select></div>
+            <div class="field"><label>Spesifikasi Produk Jadi (no. dokumen)</label><select data-field-external="spesifikasiProdukJadi">${externalDocOptionsHtml(state.externalLists.produkJadi, p.spesifikasiProdukJadi)}</select></div>
+          </div>
+
+          ${renderDynTableSection(p, DYNAMIC_TABLES[0], 4)}
+          ${renderDynTableSection(p, DYNAMIC_TABLES[1], 5)}
+          ${renderDynTableSection(p, DYNAMIC_TABLES[2], 6)}
+          ${renderDynTableSection(p, DYNAMIC_TABLES[3], 7)}
+
+          <div class="section-title"><span class="n">8</span> Kondisi Ruangan</div>
+          ${renderFixedFieldsGroup('Penimbangan', 'kondisiRuangan.penimbangan', p, [
+            {field:'suhu', label:'Suhu Ruangan (°C)'}, {field:'rh', label:'Kelembaban/RH (%)'},
+            {field:'kebersihanArea', label:'Kebersihan Area'}, {field:'kebersihanMesin', label:'Kebersihan Mesin'},
+            {field:'diperiksaOleh', label:'Diperiksa Oleh'}
+          ])}
+          ${renderFixedFieldsGroup('Pengolahan', 'kondisiRuangan.pengolahan', p, [
+            {field:'suhu', label:'Suhu Ruangan (°C)'}, {field:'rh', label:'Kelembaban/RH (%)'},
+            {field:'kebersihanArea', label:'Kebersihan Area'}, {field:'kebersihanMesin', label:'Kebersihan Mesin'},
+            {field:'diperiksaOleh', label:'Diperiksa Oleh'}
+          ])}
+
+          ${renderFlowchartStepsSection(p, 9)}
+
+          ${renderDynTableSection(p, DYNAMIC_TABLES[4], 10)}
+
+          <div class="section-title"><span class="n">11</span> Pengujian Sampling</div>
+          <div class="field" style="max-width:280px;margin-bottom:6px"><label>Tanggal Sampling</label><input type="date" data-field="tanggalSampling" value="${p.tanggalSampling}"></div>
+          ${renderDynTableSection(p, DYNAMIC_TABLES[5], '11b')}
+
+          ${renderDynTableSection(p, DYNAMIC_TABLES[6], 12)}
+
+          <div class="section-title"><span class="n">13</span> Perhitungan Yield</div>
+          <div class="grid3">
+            <div class="field"><label>Bobot Teoritis</label><input type="text" data-nested="yieldData.bobotTeoritis" value="${escAttr(p.yieldData.bobotTeoritis)}"></div>
+            <div class="field"><label>Bobot Aktual</label><input type="text" data-nested="yieldData.bobotAktual" value="${escAttr(p.yieldData.bobotAktual)}"></div>
+            <div class="field"><label>Selisih</label><input type="text" data-nested="yieldData.selisih" value="${escAttr(p.yieldData.selisih)}"></div>
+          </div>
+          <div class="grid" style="margin-top:10px">
+            <div class="field"><label>Rekonsiliasi (%)</label><input type="text" data-nested="yieldData.rekonsiliasi" value="${escAttr(p.yieldData.rekonsiliasi)}"></div>
+            <div class="field"><label>Keterangan</label><input type="text" data-nested="yieldData.keterangan" value="${escAttr(p.yieldData.keterangan)}" placeholder="mis. Memenuhi syarat apabila 98–100%"></div>
+          </div>
+
+          <div class="section-title"><span class="n">14</span> Hasil Validasi Proses</div>
+          <div class="table-wrap"><table class="mini-table">
+            <thead><tr><th>Parameter</th><th>Kriteria</th><th>Hasil Aktual</th><th>Status</th><th>Pemeriksa</th></tr></thead>
+            <tbody>
+              ${['cpp','cqa','yieldRow','deviasi'].map(rowKey=>{
+                const rowLabel = {cpp:'CPP', cqa:'CQA', yieldRow:'Yield', deviasi:'Deviasi'}[rowKey];
+                const row = p.hasilValidasi[rowKey];
+                return `<tr>
+                  <td style="font-weight:600;font-size:13px;padding:9px 4px">${rowLabel}</td>
+                  <td><input type="text" data-nested="hasilValidasi.${rowKey}.kriteria" value="${escAttr(row.kriteria)}"></td>
+                  <td><input type="text" data-nested="hasilValidasi.${rowKey}.hasilAktual" value="${escAttr(row.hasilAktual)}"></td>
+                  <td><input type="text" data-nested="hasilValidasi.${rowKey}.status" value="${escAttr(row.status)}"></td>
+                  <td><input type="text" data-nested="hasilValidasi.${rowKey}.pemeriksa" value="${escAttr(row.pemeriksa)}"></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table></div>
+
+          <div class="section-title"><span class="n">15</span> Evaluasi dan Kesimpulan</div>
+          <div class="radio-row">
+            ${['Validasi Diterima','Validasi Ditolak','Revalidasi'].map(opt=>`
+              <label><input type="radio" name="evalKesimpulan" value="${escAttr(opt)}" data-eval-radio ${p.evaluasiKesimpulan===opt?'checked':''}> ${opt}</label>
+            `).join('')}
+          </div>
+          <div class="field full" style="margin-top:14px"><label>Rekomendasi</label><textarea data-field="rekomendasi">${escapeHtml(p.rekomendasi)}</textarea></div>
+
+        </div>
+        <div class="drawer-footer">
+          <button class="btn btn-ghost" data-action="close-drawer">Batal</button>
+          <button class="btn btn-primary" data-action="save-product">Simpan Produk</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ---------- KELOLA KATEGORI ---------- */
+  function renderCategoryModal(){
+    const sections = [
+      { title:'Informasi Produk', types:['merk','namaProduk','batchSize','lokasiProduksi','mesin','peralatan','utilitas','tahapan'] },
+      { title:'CPP', types:['cppTahapan','cppParameter'] },
+      { title:'CQA', types:['cqaParameter'] },
+    ];
+    const groups = sections.map(section => {
+      const groupHtml = section.types.map(type=>{
+        const items = (state.categories[type]||[]);
+        const chips = items.map((v,i)=>`<span class="chip">${escapeHtml(v)} <button data-action="remove-category" data-type="${type}" data-idx="${i}" title="Hapus">✕</button></span>`).join('') || `<span class="hint">Belum ada nilai. Akan otomatis muncul di sini saat kamu pilih "+ Tambah baru…" ketika mengisi Data Master.</span>`;
+        return `<div class="cat-group"><h4>${categoryLabel(type)}</h4><div>${chips}</div></div>`;
+      }).join('');
+      return `<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin:20px 0 12px;border-top:1px solid var(--border);padding-top:16px">${section.title}</div>${groupHtml}</div>`;
+    }).join('');
+
+    return `
+    <div class="overlay" data-action="close-category-overlay">
+      <div class="drawer" style="width:min(560px,96vw)" data-stop="1">
+        <div class="drawer-head"><h3>🗂 Kelola Kategori Dropdown</h3><button class="drawer-close" data-action="close-category-modal">✕</button></div>
+        <div class="drawer-body">
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">
+            Ini daftar semua nilai yang sudah pernah ditambahkan (untuk pengecekan apakah sesuatu sudah ada atau belum).
+            Untuk menambah nilai baru, pilih <strong>"+ Tambah baru…"</strong> langsung di dropdown saat mengisi Data Master.
+            Kamu hanya bisa menghapus nilai dari sini.
+          </p>
+          ${groups}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ---------- LOCK QA TAB ---------- */
+  function renderLockQA(){
+    if(!state.lockLoggedIn){
+      return `
+      <div class="login-wrap">
+        <div class="stamp">LOCK<br>QA</div>
+        <h2>Masuk ke Lock QA</h2>
+        <p>Halaman ini terpisah dari Data Master. Masukkan kata sandi tim QA untuk melanjutkan.</p>
+        <input type="password" id="lockPassInput" placeholder="Kata sandi">
+        ${state.lockLoginError ? `<div class="login-error">${escapeHtml(state.lockLoginError)}</div>` : ''}
+        <button class="btn btn-primary" style="width:100%;justify-content:center" data-action="lock-login">Masuk</button>
+      </div>`;
+    }
+    const rows = state.lockqa.map(r => {
+      const prod = state.products.find(p=>p.id===r.kodeId);
+      const kodeLabel = prod ? `${prod.kode} — ${fullName(prod)}` : (r.kodeId ? '(produk telah dihapus)' : '-');
+      const stCls = r.status==='Acc Supervisor QA' ? 'st-acc' : (r.status==='Ditolak' ? 'st-reject' : 'st-wait');
+      return `<tr>
+        <td>${escapeHtml(r.tanggalBerlaku||'-')}</td><td class="mono">${escapeHtml(r.noDokumen||'-')}</td>
+        <td><span class="code-badge">${escapeHtml(kodeLabel)}</span></td>
+        <td style="white-space:normal;max-width:280px">${escapeHtml(r.alasanPerubahan||'-')}</td>
+        <td><span class="badge-status ${stCls}">${escapeHtml(r.status)}</span></td>
+        <td><div class="actions-cell">
+          <button class="icon-btn" data-action="edit-lock" data-id="${r.id}" title="Edit">✎</button>
+          <button class="icon-btn danger" data-action="delete-lock" data-id="${r.id}" title="Hapus">🗑</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+    return `
+      <div class="page-head">
+        <div><h2>Lock QA — Persetujuan Perubahan</h2><p>Login berhasil. Halaman ini hanya berisi data pengajuan/persetujuan, terpisah dari Data Master.</p></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost" data-action="lock-logout">Keluar</button>
+          <button class="btn btn-primary" data-action="new-lock">+ Tambah Pengajuan</button>
+        </div>
+      </div>
+      <div class="card"><div class="table-wrap">
+        ${state.lockqa.length===0 ? `<div class="empty-state"><div class="icon">🔒</div><h3>Belum ada pengajuan Lock QA</h3><p>Klik "Tambah Pengajuan" untuk membuat pengajuan perubahan baru.</p></div>` : `
+        <table><thead><tr><th>Tanggal Berlaku</th><th>No. Dokumen</th><th>Kode Produk</th><th>Alasan Perubahan</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${rows}</tbody></table>`}
+      </div></div>
+      ${state.lockDrawerOpen ? renderLockDrawer() : ''}
+    `;
+  }
+
+  function renderLockDrawer(){
+    const r = state.editingLock;
+    const options = state.products.map(p => `<option value="${p.id}" ${r.kodeId===p.id?'selected':''}>${escapeHtml(p.kode)} — ${escapeHtml(fullName(p))}</option>`).join('');
+    return `
+    <div class="overlay" data-action="lock-overlay-close">
+      <div class="drawer" style="width:min(520px,96vw)" data-stop="1">
+        <div class="drawer-head"><h3>${r._isNew ? 'Tambah Pengajuan Lock QA' : 'Edit Pengajuan Lock QA'}</h3><button class="drawer-close" data-action="close-lock-drawer">✕</button></div>
+        <div class="drawer-body">
+          <div class="field" style="margin-bottom:14px"><label>Tanggal Berlaku</label><input type="date" data-lockfield="tanggalBerlaku" value="${r.tanggalBerlaku}"></div>
+          <div class="field" style="margin-bottom:14px"><label>No. Dokumen</label><input type="text" class="mono" data-lockfield="noDokumen" value="${escAttr(r.noDokumen)}"></div>
+          <div class="field" style="margin-bottom:14px"><label>Alasan Perubahan</label><textarea data-lockfield="alasanPerubahan">${escapeHtml(r.alasanPerubahan)}</textarea></div>
+          <div class="field" style="margin-bottom:14px"><label>Pilih Kode Produk</label><select data-lockfield="kodeId"><option value="">— pilih kode —</option>${options}</select></div>
+          <div class="field" style="margin-bottom:14px"><label>Status</label>
+            <select data-lockfield="status">
+              <option ${r.status==='Menunggu'?'selected':''}>Menunggu</option>
+              <option ${r.status==='Acc Supervisor QA'?'selected':''}>Acc Supervisor QA</option>
+              <option ${r.status==='Ditolak'?'selected':''}>Ditolak</option>
+            </select>
+          </div>
+        </div>
+        <div class="drawer-footer"><button class="btn btn-ghost" data-action="close-lock-drawer">Batal</button><button class="btn btn-primary" data-action="save-lock">Simpan</button></div>
+      </div>
+    </div>`;
+  }
+
+  /* ---------- DETAIL PRODUK (digabung per Nama Produk) ---------- */
+  function uniqueNamaProdukList(){
+    const seen = new Map();
+    state.products.forEach(p=>{ const key = String(p.namaProduk||'').trim(); if(key && !seen.has(key.toLowerCase())) seen.set(key.toLowerCase(), key); });
+    return Array.from(seen.values());
+  }
+
+  function renderBatchCard(p){
+    const st = lockStatusFor(p.id);
+    const jadwalRows = (p.jadwal||[]).filter(j=>j.tahapan||j.tanggal||j.nomorBatch).map(j=>`<tr><td>${escapeHtml(j.tahapan||'-')}</td><td>${escapeHtml(j.tanggal||'-')}</td><td>${escapeHtml(j.nomorBatch||'-')}</td></tr>`).join('') || `<tr><td colspan="3" style="color:var(--text-muted)">Belum ada jadwal.</td></tr>`;
+
+    function fixedRowsView(obj, fields){
+      return fields.map(f=>`<div class="detail-item"><div class="lbl">${f.label}</div><div class="val ${obj[f.field]?'':'empty'}">${escapeHtml(obj[f.field]||'-')}</div></div>`).join('');
+    }
+
+    return `
+    <div class="card" style="padding:20px 22px;margin-bottom:22px;border-left:4px solid var(--primary)">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="code-badge" style="font-size:14px;padding:5px 12px">${escapeHtml(p.kode||'-')}</span>
+          <span class="badge-status ${st.cls}">${escapeHtml(st.label)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" data-action="export-docx" data-id="${p.id}">📄 Unduh Word</button>
+          <button class="btn btn-ghost btn-sm" data-action="export-pdf" data-id="${p.id}">🖨 Export PDF</button>
+          <span style="font-size:12px;color:var(--text-muted)">Diisi: ${escapeHtml(p.tanggalIsi||'-')}</span>
+        </div>
+      </div>
+
+      <div class="detail-grid" style="margin-bottom:18px">
+        <div class="detail-item"><div class="lbl">Merk</div><div class="val ${p.merk?'':'empty'}">${escapeHtml(p.merk||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Nomor Batch</div><div class="val ${p.nomorBatchLaporan?'':'empty'}">${escapeHtml(p.nomorBatchLaporan||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Bentuk Sediaan</div><div class="val ${p.bentukSediaan?'':'empty'}">${escapeHtml(p.bentukSediaan||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Batch Size (kg)</div><div class="val ${p.batchSize?'':'empty'}">${escapeHtml(p.batchSize||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Lokasi Produksi</div><div class="val ${p.lokasiProduksi?'':'empty'}">${escapeHtml(p.lokasiProduksi||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Mesin</div><div class="val ${p.mesin?'':'empty'}">${escapeHtml(p.mesin||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Tanggal Produksi</div><div class="val ${p.tanggalProduksi?'':'empty'}">${escapeHtml(p.tanggalProduksi||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">DPI</div><div class="val ${p.dpi?'':'empty'}">${escapeHtml(p.dpi||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">PPI</div><div class="val ${p.ppi?'':'empty'}">${escapeHtml(p.ppi||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">CPB — Catatan Pengolahan Batch</div><div class="val ${p.cpb?'':'empty'}">${escapeHtml(p.cpb||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Spesifikasi Produk Ruahan</div><div class="val ${p.spesifikasiRuahan?'':'empty'}">${escapeHtml(p.spesifikasiRuahan||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Spesifikasi Produk Jadi</div><div class="val ${p.spesifikasiProdukJadi?'':'empty'}">${escapeHtml(p.spesifikasiProdukJadi||'Belum diisi')}</div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:0">Kategori Tahapan</div>
+      <div class="table-wrap"><table><thead><tr><th>Tahapan</th><th>Tanggal</th><th>Nomor Batch</th></tr></thead><tbody>${jadwalRows}</tbody></table></div>
+
+      ${p.keteranganValidasi ? `<div class="section-title">Keterangan Validasi</div><div style="font-size:13.5px">${escapeHtml(p.keteranganValidasi)}</div>` : ''}
+
+      ${renderDynTableView(p, DYNAMIC_TABLES[0])}
+      ${renderDynTableView(p, DYNAMIC_TABLES[1])}
+      ${renderDynTableView(p, DYNAMIC_TABLES[2])}
+      ${renderDynTableView(p, DYNAMIC_TABLES[3])}
+
+      <div class="section-title">Kondisi Ruangan — Penimbangan</div>
+      <div class="detail-grid">${fixedRowsView(p.kondisiRuangan.penimbangan, [{field:'suhu',label:'Suhu (°C)'},{field:'rh',label:'RH (%)'},{field:'kebersihanArea',label:'Kebersihan Area'},{field:'kebersihanMesin',label:'Kebersihan Mesin'},{field:'diperiksaOleh',label:'Diperiksa Oleh'}])}</div>
+      <div class="section-title">Kondisi Ruangan — Pengolahan</div>
+      <div class="detail-grid">${fixedRowsView(p.kondisiRuangan.pengolahan, [{field:'suhu',label:'Suhu (°C)'},{field:'rh',label:'RH (%)'},{field:'kebersihanArea',label:'Kebersihan Area'},{field:'kebersihanMesin',label:'Kebersihan Mesin'},{field:'diperiksaOleh',label:'Diperiksa Oleh'}])}</div>
+
+      <div class="section-title">Bagan Alur Proses</div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px">${buildFlowchartSVG(p.alurProsesTahapan||[])}</div>
+
+      ${renderDynTableView(p, DYNAMIC_TABLES[4])}
+
+      ${p.tanggalSampling ? `<div class="section-title">Tanggal Sampling</div><div style="font-size:13.5px">${escapeHtml(p.tanggalSampling)}</div>` : ''}
+      ${renderDynTableView(p, DYNAMIC_TABLES[5])}
+      ${renderDynTableView(p, DYNAMIC_TABLES[6])}
+
+      <div class="section-title">Perhitungan Yield</div>
+      <div class="detail-grid">${fixedRowsView(p.yieldData, [{field:'bobotTeoritis',label:'Bobot Teoritis'},{field:'bobotAktual',label:'Bobot Aktual'},{field:'selisih',label:'Selisih'},{field:'rekonsiliasi',label:'Rekonsiliasi (%)'},{field:'keterangan',label:'Keterangan'}])}</div>
+
+      <div class="section-title">Hasil Validasi Proses</div>
+      <div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Kriteria</th><th>Hasil Aktual</th><th>Status</th><th>Pemeriksa</th></tr></thead><tbody>
+        ${['cpp','cqa','yieldRow','deviasi'].map(k=>{
+          const label = {cpp:'CPP',cqa:'CQA',yieldRow:'Yield',deviasi:'Deviasi'}[k];
+          const row = p.hasilValidasi[k];
+          return `<tr><td><strong>${label}</strong></td><td>${escapeHtml(row.kriteria||'-')}</td><td>${escapeHtml(row.hasilAktual||'-')}</td><td>${escapeHtml(row.status||'-')}</td><td>${escapeHtml(row.pemeriksa||'-')}</td></tr>`;
+        }).join('')}
+      </tbody></table></div>
+
+      ${p.evaluasiKesimpulan ? `<div class="section-title">Evaluasi dan Kesimpulan</div><div style="font-size:13.5px"><span class="badge-status st-acc">${escapeHtml(p.evaluasiKesimpulan)}</span></div>` : ''}
+      ${p.rekomendasi ? `<div class="section-title">Rekomendasi</div><div style="font-size:13.5px">${escapeHtml(p.rekomendasi)}</div>` : ''}
+    </div>`;
+  }
+
+  function renderDetail(){
+    const namaList = uniqueNamaProdukList();
+    const options = namaList.map(n => `<option value="${escAttr(n)}" ${state.detailProductName===n?'selected':''}>${escapeHtml(n)}</option>`).join('');
+    const selectedKey = String(state.detailProductName||'').trim().toLowerCase();
+    const matches = selectedKey ? state.products.filter(p => String(p.namaProduk||'').trim().toLowerCase() === selectedKey) : [];
+
+    let body = `<div class="empty-state"><div class="icon">📋</div><h3>Pilih produk untuk melihat detail</h3><p>Gunakan dropdown di atas untuk memilih Nama Produk. Jika ada beberapa batch/kode dengan nama produk yang sama, semua datanya akan digabung di sini.</p></div>`;
+
+    if(matches.length){
+      const merks = Array.from(new Set(matches.map(p=>p.merk).filter(Boolean)));
+      const allLock = [];
+      matches.forEach(p=>{ state.lockqa.filter(r=>r.kodeId===p.id).forEach(r=> allLock.push(Object.assign({}, r, { _kode: p.kode }))); });
+      const dokProtokolRows = allLock.map(r=>{
+        const stCls = r.status==='Acc Supervisor QA' ? 'st-acc' : (r.status==='Ditolak' ? 'st-reject' : 'st-wait');
+        return `<tr><td><span class="code-badge">${escapeHtml(r._kode||'-')}</span></td><td>${escapeHtml(r.tanggalBerlaku||'-')}</td><td class="mono">${escapeHtml(r.noDokumen||'-')}</td><td style="white-space:normal;max-width:240px">${escapeHtml(r.alasanPerubahan||'-')}</td><td><span class="badge-status ${stCls}">${escapeHtml(r.status)}</span></td></tr>`;
+      }).join('') || `<tr><td colspan="5" style="color:var(--text-muted)">Belum ada dokumen protokol/pengajuan Lock QA untuk produk ini.</td></tr>`;
+
+      const batchCards = matches.map(renderBatchCard).join('');
+
+      body = `
+        <div class="card" style="padding:18px 22px;margin-bottom:22px;background:var(--primary-tint);border:none">
+          <div style="font-size:13px;color:var(--primary-dark)">
+            <strong>${matches.length} batch/kode</strong> ditemukan dengan Nama Produk yang sama.
+            ${merks.length ? ` Merk: ${merks.map(m=>`<span class="chip" style="background:#fff">${escapeHtml(m)}</span>`).join('')}` : ''}
+          </div>
+        </div>
+        <div class="section-title" style="margin-top:0">📦 Rincian per Batch/Kode</div>
+        ${batchCards}
+        <div class="section-title">📄 Dokumen Protokol (Lock QA) — gabungan semua kode</div>
+        <div class="card"><div class="table-wrap"><table><thead><tr><th>Kode</th><th>Tanggal Berlaku</th><th>No. Dokumen</th><th>Alasan Perubahan</th><th>Status</th></tr></thead><tbody>${dokProtokolRows}</tbody></table></div></div>
+      `;
+    }
+
+    return `
+      <div class="page-head"><div><h2>Detail Produk</h2><p>Pilih Nama Produk untuk melihat seluruh data (view-only). Jika ada beberapa kode/batch dengan nama produk sama, semuanya digabung di satu halaman.</p></div></div>
+      <div class="field full" style="max-width:480px;margin-bottom:20px"><label>Nama Produk</label><select id="detailProductSelect"><option value="">— pilih nama produk —</option>${options}</select></div>
+      ${body}
+    `;
+  }
+
+  /* ---------------- EVENTS ---------------- */
+  function attachEvents(){
+    const app = document.getElementById('app');
+
+    app.querySelectorAll('[data-action="goto-tab"]').forEach(el=>{ el.onclick = () => { state.tab = el.dataset.tab; render(); }; });
+
+    const openSettingsBtn = app.querySelector('[data-action="open-settings"]');
+    if(openSettingsBtn) openSettingsBtn.onclick = () => { state.settingsOpen = true; render(); };
+    app.querySelectorAll('[data-action="close-settings"], [data-action="close-settings-overlay"]').forEach(el=>{
+      el.onclick = (e) => { if(e.target !== el && el.dataset.action==='close-settings-overlay') return; state.settingsOpen = false; render(); };
+    });
+    const settingsLoginBtn = app.querySelector('[data-action="settings-login"]');
+    if(settingsLoginBtn) settingsLoginBtn.onclick = async () => {
+      const val = app.querySelector('#settingsPassInput').value;
+      settingsLoginBtn.disabled = true;
+      const result = await checkPassword('settings', val);
+      settingsLoginBtn.disabled = false;
+      if(result === true){ state.settingsUnlocked = true; state.settingsPassError = ''; render(); }
+      else if(result === false){ state.settingsPassError = 'Password salah. Coba lagi.'; render(); }
+      else { state.settingsUnlocked = true; state.settingsPassError = ''; render(); showToast('Belum terhubung ke Google Sheets — password Pengaturan belum aktif.'); }
+    };
+    const settingsPassInput = app.querySelector('#settingsPassInput');
+    if(settingsPassInput) settingsPassInput.onkeydown = (e) => { if(e.key==='Enter') settingsLoginBtn.click(); };
+
+    const saveSettingsBtn = app.querySelector('[data-action="save-settings"]');
+    if(saveSettingsBtn) saveSettingsBtn.onclick = async () => {
+      const url = app.querySelector('#scriptUrlInput').value;
+      await saveScriptConfig(url);
+      state.settingsOpen = false;
+      showToast(state.syncError ? 'Tersimpan, tapi gagal terhubung. Cek URL.' : 'Tersambung ke Google Sheets.');
+      render();
+    };
+    const testBtn = app.querySelector('[data-action="test-connection"]');
+    if(testBtn) testBtn.onclick = async () => {
+      const url = app.querySelector('#scriptUrlInput').value.trim();
+      if(!url){ showToast('Isi URL dulu.'); return; }
+      state.syncing = true; render();
+      try{
+        const res = await fetch(url, { method:'GET' });
+        const json = await res.json();
+        showToast(json && json.ok ? 'Koneksi berhasil ✔' : ('Gagal: ' + ((json&&json.error)||'respons tidak valid')));
+      }catch(e){ showToast('Gagal terhubung. Periksa URL & pengaturan deployment.'); }
+      state.syncing = false; render();
+    };
+    const toggleRevealBtn = app.querySelector('[data-action="toggle-reveal"]');
+    if(toggleRevealBtn) toggleRevealBtn.onclick = () => { state.revealSecrets = !state.revealSecrets; render(); };
+
+    const refreshBtn = app.querySelector('[data-action="refresh-sheet"]');
+    if(refreshBtn) refreshBtn.onclick = async () => { await refreshFromSheet(); showToast('Data diperbarui dari Sheet.'); };
+
+    const searchInput = app.querySelector('#searchInput');
+    if(searchInput) searchInput.oninput = () => { state.searchQuery = searchInput.value; refreshMasterTableWrap(); };
+
+    const openCatBtn = app.querySelector('[data-action="open-category-modal"]');
+    if(openCatBtn) openCatBtn.onclick = () => { state.categoryModalOpen = true; render(); };
+    app.querySelectorAll('[data-action="close-category-modal"], [data-action="close-category-overlay"]').forEach(el=>{
+      el.onclick = (e) => { if(e.target !== el && el.dataset.action==='close-category-overlay') return; state.categoryModalOpen = false; render(); };
+    });
+    app.querySelectorAll('[data-action="remove-category"]').forEach(el=>{
+      el.onclick = async () => { const type = el.dataset.type, idx = parseInt(el.dataset.idx); state.categories[type].splice(idx,1); await saveCategories(); render(); };
+    });
+
+    const newBtn = app.querySelector('[data-action="new-product"]');
+    if(newBtn) newBtn.onclick = () => {
+      const p = emptyProduct(); p._isNew = true;
+      state.editingProduct = p; state.drawerOpen = true; render();
+    };
+    attachMasterTableEvents();
+
+    app.querySelectorAll('[data-action="close-drawer"], [data-action="overlay-close"]').forEach(el=>{
+      el.onclick = (e) => { if(e.target !== el && el.dataset.action==='overlay-close') return; state.drawerOpen = false; state.editingProduct = null; render(); };
+    });
+    const drawerInner = app.querySelector('.drawer[data-stop]');
+    if(drawerInner) drawerInner.onclick = (e)=> e.stopPropagation();
+
+    if(state.drawerOpen){
+      app.querySelectorAll('[data-field]').forEach(el=>{
+        el.oninput = () => {
+          const f = el.dataset.field;
+          if(f === 'kode'){ state.editingProduct.kode = el.value; state.editingProduct._kodeAuto = false; }
+          else { state.editingProduct[f] = el.value; }
+          const box = app.querySelector('.computed-box');
+          if(box && (f==='namaProdukLengkapOverride')){ box.textContent = fullName(state.editingProduct) || '—'; }
+        };
+      });
+      const resetKodeLink = app.querySelector('[data-action="reset-kode-auto"]');
+      if(resetKodeLink) resetKodeLink.onclick = (e) => {
+        e.preventDefault();
+        state.editingProduct._kodeAuto = true;
+        state.editingProduct.kode = computeAutoKode(state.editingProduct.namaProduk, state.editingProduct._isNew ? null : state.editingProduct.id);
+        render();
+      };
+
+      app.querySelectorAll('[data-field-select]').forEach(el=>{
+        el.onchange = async () => {
+          const field = el.dataset.fieldSelect;
+          if(el.value === '__add_new__'){
+            const type = field;
+            const newVal = window.prompt('Masukkan nilai baru untuk ' + categoryLabel(type) + ':');
+            if(newVal && newVal.trim()){
+              const v = newVal.trim();
+              if(!state.categories[type]) state.categories[type] = [];
+              if(!state.categories[type].includes(v)) state.categories[type].push(v);
+              state.editingProduct[field] = v;
+              await saveCategories();
+            } else { state.editingProduct[field] = ''; }
+          } else { state.editingProduct[field] = el.value; }
+          if(field === 'namaProduk' && state.editingProduct._isNew && state.editingProduct._kodeAuto !== false){
+            state.editingProduct.kode = computeAutoKode(state.editingProduct.namaProduk, null);
+          }
+          render();
+        };
+      });
+
+      app.querySelectorAll('[data-jadwal="tanggal"]').forEach(el=>{ el.oninput = () => { state.editingProduct.jadwal[parseInt(el.dataset.idx)].tanggal = el.value; }; });
+      app.querySelectorAll('[data-jadwal="nomorBatch"]').forEach(el=>{ el.oninput = () => { state.editingProduct.jadwal[parseInt(el.dataset.idx)].nomorBatch = el.value; }; });
+      app.querySelectorAll('[data-jadwal="tahapan"]').forEach(el=>{
+        el.onchange = async () => {
+          const idx = parseInt(el.dataset.idx);
+          if(el.value === '__add_new__'){
+            const newVal = window.prompt('Masukkan tahapan baru (mis. Validasi Proses 7):');
+            if(newVal && newVal.trim()){
+              const v = newVal.trim();
+              if(!state.categories.tahapan) state.categories.tahapan = [];
+              if(!state.categories.tahapan.includes(v)) state.categories.tahapan.push(v);
+              state.editingProduct.jadwal[idx].tahapan = v;
+              await saveCategories();
+            } else { state.editingProduct.jadwal[idx].tahapan = ''; }
+          } else { state.editingProduct.jadwal[idx].tahapan = el.value; }
+          render();
+        };
+      });
+      const addJadwalBtn = app.querySelector('[data-action="add-jadwal"]');
+      if(addJadwalBtn) addJadwalBtn.onclick = () => {
+        state.editingProduct.jadwal.push({tahapan:'', tanggal:'', nomorBatch:''});
+        render();
+      };
+      app.querySelectorAll('[data-action="remove-jadwal"]').forEach(el=>{
+        el.onclick = () => {
+          state.editingProduct.jadwal.splice(parseInt(el.dataset.idx),1);
+          if(state.editingProduct.jadwal.length===0) state.editingProduct.jadwal.push({tahapan:'',tanggal:'',nomorBatch:''});
+          render();
+        };
+      });
+
+      app.querySelectorAll('[data-nested]').forEach(el=>{
+        el.oninput = () => { setNested(state.editingProduct, el.dataset.nested, el.value); };
+      });
+
+      app.querySelectorAll('[data-field-external]').forEach(el=>{
+        el.onchange = () => {
+          const field = el.dataset.fieldExternal;
+          if(el.value === '__manual__'){
+            const newVal = window.prompt('Masukkan nomor dokumen secara manual:');
+            state.editingProduct[field] = newVal ? newVal.trim() : '';
+          } else {
+            state.editingProduct[field] = el.value;
+          }
+          render();
+        };
+      });
+
+      app.querySelectorAll('[data-eval-radio]').forEach(el=>{
+        el.onchange = () => { state.editingProduct.evaluasiKesimpulan = el.value; };
+      });
+
+      DYNAMIC_TABLES.forEach(cfg=>{
+        app.querySelectorAll(`[data-dyn^="${cfg.key}:"]`).forEach(el=>{
+          const field = el.dataset.dyn.split(':')[1];
+          const idx = parseInt(el.dataset.idx);
+          const col = cfg.columns.find(c=>c.field===field);
+          if(col.type === 'select'){
+            el.onchange = async () => {
+              if(el.value === '__add_new__'){
+                const newVal = window.prompt('Masukkan nilai baru untuk ' + categoryLabel(col.cat) + ':');
+                if(newVal && newVal.trim()){
+                  const v = newVal.trim();
+                  if(!state.categories[col.cat]) state.categories[col.cat] = [];
+                  if(!state.categories[col.cat].includes(v)) state.categories[col.cat].push(v);
+                  state.editingProduct[cfg.key][idx][field] = v;
+                  await saveCategories();
+                } else { state.editingProduct[cfg.key][idx][field] = ''; }
+              } else { state.editingProduct[cfg.key][idx][field] = el.value; }
+              render();
+            };
+          } else if(col.type === 'fixedselect'){
+            el.onchange = () => { state.editingProduct[cfg.key][idx][field] = el.value; };
+          } else if(col.type === 'externalBahanBaku'){
+            el.onchange = () => {
+              if(el.value === '__manual__'){
+                const newVal = window.prompt('Masukkan Kode Bahan secara manual:');
+                state.editingProduct[cfg.key][idx][field] = newVal ? newVal.trim() : '';
+              } else {
+                state.editingProduct[cfg.key][idx][field] = el.value;
+                const match = (state.externalLists.bahanBaku||[]).find(i=>i.kode===el.value);
+                if(match){
+                  const row = state.editingProduct[cfg.key][idx];
+                  row.namaDagang = match.nama || '';
+                  row.namaProdusen = match.produsen || '';
+                  row.namaSupplier = match.pemasok || '';
+                  row.noDokumen = match.dokumen || '';
+                }
+              }
+              render();
+            };
+          } else {
+            el.oninput = () => { state.editingProduct[cfg.key][idx][field] = el.value; };
+          }
+        });
+      });
+      app.querySelectorAll('[data-action="add-dyn-row"]').forEach(el=>{
+        el.onclick = () => { const cfg = DYNAMIC_TABLES.find(t=>t.key===el.dataset.table); state.editingProduct[cfg.key].push(emptyRowFor(cfg)); render(); };
+      });
+      app.querySelectorAll('[data-action="remove-dyn-row"]').forEach(el=>{
+        el.onclick = () => {
+          const cfg = DYNAMIC_TABLES.find(t=>t.key===el.dataset.table);
+          state.editingProduct[cfg.key].splice(parseInt(el.dataset.idx),1);
+          if(state.editingProduct[cfg.key].length===0) state.editingProduct[cfg.key].push(emptyRowFor(cfg));
+          render();
+        };
+      });
+
+      app.querySelectorAll('[data-flow-idx]').forEach(el=>{
+        el.oninput = () => {
+          state.editingProduct.alurProsesTahapan[parseInt(el.dataset.flowIdx)] = el.value;
+          const preview = document.getElementById('flowchartPreview');
+          if(preview) preview.innerHTML = buildFlowchartSVG(state.editingProduct.alurProsesTahapan);
+        };
+      });
+      const addFlowBtn = app.querySelector('[data-action="add-flow-step"]');
+      if(addFlowBtn) addFlowBtn.onclick = () => { state.editingProduct.alurProsesTahapan.push(''); render(); };
+      app.querySelectorAll('[data-action="remove-flow-step"]').forEach(el=>{
+        el.onclick = () => {
+          state.editingProduct.alurProsesTahapan.splice(parseInt(el.dataset.idx),1);
+          if(state.editingProduct.alurProsesTahapan.length===0) state.editingProduct.alurProsesTahapan.push('');
+          render();
+        };
+      });
+
+      const saveBtn = app.querySelector('[data-action="save-product"]');
+      if(saveBtn) saveBtn.onclick = async () => {
+        if(!state.editingProduct.kode || !state.editingProduct.merk){ showToast('Kode dan Merk wajib diisi.'); return; }
+        const idx = state.products.findIndex(x=>x.id===state.editingProduct.id);
+        const clean = JSON.parse(JSON.stringify(state.editingProduct));
+        delete clean._isNew; delete clean._kodeAuto;
+        if(idx>=0) state.products[idx] = clean; else state.products.push(clean);
+        await saveProducts();
+        state.drawerOpen = false; state.editingProduct = null;
+        showToast('Data produk tersimpan.'); render();
+      };
+    }
+
+    const loginBtn = app.querySelector('[data-action="lock-login"]');
+    if(loginBtn) loginBtn.onclick = async () => {
+      const val = app.querySelector('#lockPassInput').value;
+      loginBtn.disabled = true;
+      const result = await checkPassword('lockqa', val);
+      loginBtn.disabled = false;
+      if(result === true){ state.lockLoggedIn = true; state.lockLoginError=''; render(); }
+      else if(result === false){ state.lockLoginError = 'Kata sandi salah. Coba lagi.'; render(); }
+      else { state.lockLoggedIn = true; state.lockLoginError=''; render(); showToast('Belum terhubung ke Google Sheets — password Lock QA belum aktif.'); }
+    };
+    const passInput = app.querySelector('#lockPassInput');
+    if(passInput) passInput.onkeydown = (e)=>{ if(e.key==='Enter') loginBtn.click(); };
+
+    const logoutBtn = app.querySelector('[data-action="lock-logout"]');
+    if(logoutBtn) logoutBtn.onclick = () => { state.lockLoggedIn = false; render(); };
+
+    const newLockBtn = app.querySelector('[data-action="new-lock"]');
+    if(newLockBtn) newLockBtn.onclick = () => {
+      state.editingLock = {id:uid(), tanggalBerlaku:'', noDokumen:'', alasanPerubahan:'', kodeId:'', status:'Menunggu', _isNew:true};
+      state.lockDrawerOpen = true; render();
+    };
+    app.querySelectorAll('[data-action="edit-lock"]').forEach(el=>{
+      el.onclick = () => { const orig = state.lockqa.find(x=>x.id===el.dataset.id); state.editingLock = JSON.parse(JSON.stringify(orig)); state.lockDrawerOpen = true; render(); };
+    });
+    app.querySelectorAll('[data-action="delete-lock"]').forEach(el=>{
+      el.onclick = async () => { if(!confirm('Hapus pengajuan ini?')) return; state.lockqa = state.lockqa.filter(x=>x.id!==el.dataset.id); await saveLockQA(); showToast('Pengajuan dihapus.'); render(); };
+    });
+    app.querySelectorAll('[data-action="close-lock-drawer"], [data-action="lock-overlay-close"]').forEach(el=>{
+      el.onclick = (e) => { if(e.target !== el && el.dataset.action==='lock-overlay-close') return; state.lockDrawerOpen=false; state.editingLock=null; render(); };
+    });
+    if(state.lockDrawerOpen){
+      const lockDrawerInner = app.querySelector('.drawer[data-stop]');
+      if(lockDrawerInner) lockDrawerInner.onclick = (e)=>e.stopPropagation();
+      app.querySelectorAll('[data-lockfield]').forEach(el=>{
+        el.oninput = () => { state.editingLock[el.dataset.lockfield] = el.value; };
+        el.onchange = () => { state.editingLock[el.dataset.lockfield] = el.value; };
+      });
+      const saveLockBtn = app.querySelector('[data-action="save-lock"]');
+      if(saveLockBtn) saveLockBtn.onclick = async () => {
+        if(!state.editingLock.kodeId || !state.editingLock.noDokumen){ showToast('Kode produk dan No. Dokumen wajib diisi.'); return; }
+        const idx = state.lockqa.findIndex(x=>x.id===state.editingLock.id);
+        const clean = JSON.parse(JSON.stringify(state.editingLock));
+        delete clean._isNew;
+        if(idx>=0) state.lockqa[idx] = clean; else state.lockqa.push(clean);
+        await saveLockQA();
+        state.lockDrawerOpen=false; state.editingLock=null;
+        showToast('Pengajuan Lock QA tersimpan.'); render();
+      };
+    }
+
+    const detailSelect = app.querySelector('#detailProductSelect');
+    if(detailSelect) detailSelect.onchange = () => { state.detailProductName = detailSelect.value; render(); };
+
+    app.querySelectorAll('[data-action="export-docx"]').forEach(el=>{
+      el.onclick = async () => {
+        const p = state.products.find(x=>x.id===el.dataset.id);
+        if(!p) return;
+        el.disabled = true; const origText = el.textContent; el.textContent = 'Membuat file…';
+        try{ await downloadDocx(p); }catch(e){ showToast('Gagal membuat file Word: ' + e.message); }
+        el.disabled = false; el.textContent = origText;
+      };
+    });
+    app.querySelectorAll('[data-action="export-pdf"]').forEach(el=>{
+      el.onclick = () => {
+        const p = state.products.find(x=>x.id===el.dataset.id);
+        if(!p) return;
+        printAsPdf(p);
+      };
+    });
+  }
+
+  function renderSettingsModal(){
+    if(!state.settingsUnlocked){
+      return `
+      <div class="overlay" data-action="close-settings-overlay">
+        <div class="drawer" style="width:min(420px,96vw)" data-stop="1">
+          <div class="drawer-head"><h3>⚙ Pengaturan Terkunci</h3><button class="drawer-close" data-action="close-settings">✕</button></div>
+          <div class="drawer-body" style="text-align:center;padding-top:10px">
+            <div class="stamp">ADMIN<br>ONLY</div>
+            <h2 style="font-size:15px;margin-bottom:4px">Masuk ke Pengaturan</h2>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:18px">Halaman ini hanya untuk admin yang mengelola sinkronisasi Google Sheets.</p>
+            <input type="password" id="settingsPassInput" placeholder="Password Pengaturan" style="text-align:center;letter-spacing:2px;margin-bottom:10px">
+            ${state.settingsPassError ? `<div class="login-error">${escapeHtml(state.settingsPassError)}</div>` : ''}
+            <button class="btn btn-primary" style="width:100%;justify-content:center" data-action="settings-login">Masuk</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    const inputType = state.revealSecrets ? 'text' : 'password';
+    return `
+    <div class="overlay" data-action="close-settings-overlay">
+      <div class="drawer" style="width:min(560px,96vw)" data-stop="1">
+        <div class="drawer-head"><h3>⚙ Pengaturan Sinkronisasi Google Sheets</h3><button class="drawer-close" data-action="close-settings">✕</button></div>
+        <div class="drawer-body">
+          <p style="font-size:13.5px;color:var(--text-muted);line-height:1.6">Tempel <strong>URL Web App</strong> dari Google Apps Script kamu di sini. Setting ini berlaku untuk seluruh tim yang membuka website ini.</p>
+          <div class="field" style="margin:16px 0"><label>URL Apps Script (diakhiri /exec)</label><input type="${inputType}" id="scriptUrlInput" class="mono" value="${escAttr(state.scriptUrl)}" placeholder="https://script.google.com/macros/s/xxxx/exec"></div>
+          <button type="button" class="btn btn-ghost btn-sm" data-action="toggle-reveal" style="margin-bottom:16px">${state.revealSecrets ? '🙈 Sembunyikan' : '👁 Tampilkan'}</button>
+          <div style="display:flex;gap:10px;margin-bottom:6px">
+            <button class="btn btn-primary" data-action="save-settings">Simpan &amp; Sambungkan</button>
+            <button class="btn btn-ghost" data-action="test-connection">Tes Koneksi</button>
+          </div>
+          <p class="hint">Belum punya URL-nya? Minta file "AppsScript.gs" ke tim yang membuat website ini, lalu ikuti panduan setup di bagian atas file tersebut.</p>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  (async function bootstrap(){
+    await loadScriptUrlConfig();
+    render();
+  })();
+})();
+</script>
+</body>
+</html>
