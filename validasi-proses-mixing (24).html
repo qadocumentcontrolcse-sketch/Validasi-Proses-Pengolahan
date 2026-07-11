@@ -1,0 +1,2629 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Validasi Proses Mixing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F6F6; --surface:#FFFFFF; --primary:#0F5C5C; --primary-dark:#0A4141; --primary-tint:#E4EFEE;
+    --accent:#C77D2E; --accent-tint:#FBEDDD; --text:#1B2B2B; --text-muted:#5C7070; --border:#DEE7E6;
+    --success:#2F7D4F; --success-bg:#E9F5EE; --danger:#B3261E; --danger-bg:#FBEAEA; --warn:#946200; --warn-bg:#FDF3DC;
+    --radius:10px; --shadow:0 1px 2px rgba(15,50,50,0.06), 0 6px 20px rgba(15,50,50,0.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  #app{min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{background:var(--primary-dark);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--primary),#177373);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.15);}
+  .brand-text h1{font-size:16px;margin:0;font-weight:600;}
+  .brand-text p{font-size:12px;margin:2px 0 0;color:#B8D0CE;}
+  .tabs{display:flex;gap:6px;background:rgba(255,255,255,0.08);padding:4px;border-radius:10px;flex-wrap:wrap;}
+  .tab-btn{border:none;background:transparent;color:#CFE3E1;padding:9px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s ease;font-family:inherit;white-space:nowrap;}
+  .tab-btn.active{background:#fff;color:var(--primary-dark);}
+  .tab-btn:not(.active):hover{background:rgba(255,255,255,0.12);color:#fff;}
+  main{flex:1;padding:28px;max-width:1360px;margin:0 auto;width:100%;}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:16px;}
+  .page-head h2{font-size:20px;margin:0 0 4px;}
+  .page-head p{margin:0;color:var(--text-muted);font-size:13.5px;}
+  .btn{border:none;cursor:pointer;font-family:inherit;font-weight:600;font-size:13.5px;padding:10px 18px;border-radius:8px;transition:transform .1s ease;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;}
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{background:var(--primary-dark);}
+  .btn-ghost{background:transparent;color:var(--primary-dark);border:1px solid var(--border);}
+  .btn-ghost:hover{background:var(--primary-tint);}
+  .btn-sm{padding:6px 12px;font-size:12.5px;border-radius:6px;}
+  .btn[disabled]{opacity:0.5;cursor:not-allowed;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;padding:10px 12px;background:var(--primary-tint);color:var(--primary-dark);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;position:sticky;top:0;z-index:2;}
+  td{padding:10px 12px;border-top:1px solid var(--border);vertical-align:top;white-space:nowrap;}
+  tbody tr:hover{background:#FAFCFC;}
+  .code-badge{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;background:var(--primary-tint);color:var(--primary-dark);padding:3px 9px;border-radius:20px;border:1px solid #CFE3E1;}
+  .empty-state{padding:60px 20px;text-align:center;color:var(--text-muted);}
+  .empty-state .icon{font-size:34px;margin-bottom:10px;}
+  .empty-state h3{margin:0 0 6px;color:var(--text);font-size:15px;}
+  .empty-state p{margin:0;font-size:13px;}
+  .search-box{position:relative;max-width:340px;flex:1;min-width:220px;}
+  .search-box input{padding-left:34px;}
+  .search-box .icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;}
+  .overlay{position:fixed;inset:0;background:rgba(15,30,30,0.45);display:flex;justify-content:flex-end;z-index:50;animation:fadeIn .15s ease;}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .drawer{background:var(--bg);width:min(760px,96vw);height:100%;overflow-y:auto;box-shadow:-8px 0 24px rgba(0,0,0,0.15);animation:slideIn .18s ease;}
+  @keyframes slideIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+  .drawer-head{position:sticky;top:0;background:var(--primary-dark);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;z-index:2;}
+  .drawer-head h3{margin:0;font-size:16px;}
+  .drawer-close{background:rgba(255,255,255,0.12);border:none;color:#fff;width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:15px;}
+  .drawer-body{padding:22px 24px 90px;}
+  .section-title{font-size:12.5px;font-weight:700;color:var(--primary-dark);text-transform:uppercase;letter-spacing:0.5px;margin:26px 0 12px;display:flex;align-items:center;gap:8px;}
+  .section-title:first-child{margin-top:0;}
+  .section-title .n{background:var(--accent);color:#fff;width:20px;height:20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  .field{margin-bottom:2px;}
+  .field.full{grid-column:1/-1;}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--text-muted);margin-bottom:6px;}
+  input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--text);}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--primary);outline-offset:1px;border-color:var(--primary);}
+  textarea{resize:vertical;min-height:56px;}
+  .hint{font-size:11.5px;color:var(--text-muted);margin-top:5px;}
+  .computed-box{background:var(--primary-tint);border:1px dashed #9FC6C3;border-radius:7px;padding:9px 11px;font-size:13.5px;font-weight:600;color:var(--primary-dark);}
+  .mini-table{width:100%;border-collapse:collapse;margin-top:8px;}
+  .mini-table td{padding:5px 4px;border:none;vertical-align:top;}
+  .mini-table input,.mini-table select{font-size:12.5px;padding:7px 9px;}
+  .row-remove{background:var(--danger-bg);color:var(--danger);border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:13px;}
+  .add-row-btn{margin-top:6px;background:none;border:1px dashed #9FC6C3;color:var(--primary-dark);padding:8px 14px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:600;width:100%;}
+  .add-row-btn:hover{background:var(--primary-tint);}
+  .drawer-footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:14px 24px;display:flex;justify-content:flex-end;gap:10px;}
+  .badge-status{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:0.2px;white-space:nowrap;}
+  .st-acc{background:var(--success-bg);color:var(--success);}
+  .st-wait{background:var(--warn-bg);color:var(--warn);}
+  .st-reject{background:var(--danger-bg);color:var(--danger);}
+  .st-none{background:#EEF2F2;color:var(--text-muted);}
+  .actions-cell{display:flex;gap:6px;}
+  .icon-btn{border:none;background:var(--primary-tint);color:var(--primary-dark);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:13px;}
+  .icon-btn.danger{background:var(--danger-bg);color:var(--danger);}
+  .icon-btn:hover{filter:brightness(0.95);}
+  .login-wrap{max-width:400px;margin:60px auto;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:34px 30px;text-align:center;}
+  .stamp{width:64px;height:64px;border-radius:50%;border:3px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;line-height:1.2;transform:rotate(-8deg);}
+  .login-wrap h2{margin:0 0 6px;font-size:17px;}
+  .login-wrap p{margin:0 0 20px;color:var(--text-muted);font-size:13px;}
+  .login-wrap input{margin-bottom:12px;text-align:center;letter-spacing:2px;}
+  .login-error{color:var(--danger);font-size:12.5px;margin:-4px 0 12px;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--primary-dark);color:#fff;padding:12px 18px;border-radius:9px;font-size:13px;box-shadow:var(--shadow);z-index:100;animation:fadeIn .2s ease;}
+  .loading-row{padding:40px;text-align:center;color:var(--text-muted);font-size:13px;}
+  .footer-note{padding:16px 28px;color:var(--text-muted);font-size:11.5px;text-align:center;}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--primary-tint);color:var(--primary-dark);padding:5px 10px;border-radius:20px;font-size:12.5px;margin:3px 5px 3px 0;}
+  .chip button{border:none;background:none;color:var(--primary-dark);cursor:pointer;font-size:12px;padding:0;line-height:1;}
+  .chip button:hover{color:var(--danger);}
+  .cat-group{margin-bottom:22px;}
+  .cat-group h4{margin:0 0 8px;font-size:13px;color:var(--text);}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  .detail-item{padding:14px 16px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);}
+  .detail-item:nth-child(2n){border-right:none;}
+  .detail-item .lbl{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;}
+  .detail-item .val{font-size:14px;font-weight:600;}
+  .detail-item .val.empty{color:var(--text-muted);font-weight:400;font-style:italic;}
+  .radio-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:6px;}
+  .radio-row label{display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px;color:var(--text);cursor:pointer;}
+  .radio-row input{width:auto;}
+  @media (max-width:720px){
+    .grid,.grid3,.detail-grid{grid-template-columns:1fr;}
+    .detail-item{border-right:none !important;}
+    main{padding:16px;}
+    .topbar{padding:14px;}
+  }
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{position:absolute;left:0;top:0;width:100%;}
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+  "use strict";
+
+  const DEFAULT_TAHAPAN = ['Validasi Proses 1','Validasi Proses 2','Validasi Proses 3','Validasi Proses 4','Validasi Proses 5','Validasi Proses 6'];
+
+  const DYNAMIC_TABLES = [
+    { key:'formula', title:'Formula', columns:[
+      {field:'kodeBahanBaku', label:'Kode Bahan Baku', type:'externalBahanBaku'},
+      {field:'konsentrasiPercent', label:'Konsentrasi (%)', type:'text'},
+      {field:'jumlahG', label:'Jumlah (g)', type:'text'},
+    ]},
+    { key:'spesifikasiBahanBaku', title:'Spesifikasi Bahan Baku', columns:[
+      {field:'kodeBahan', label:'Kode Bahan', type:'externalBahanBaku'},
+      {field:'namaDagang', label:'Nama Dagang', type:'text'},
+      {field:'namaProdusen', label:'Nama Produsen', type:'text'},
+      {field:'namaSupplier', label:'Nama Supplier', type:'text'},
+      {field:'noDokumen', label:'Nomor Dokumen', type:'externalBahanBakuDoc'},
+    ]},
+    { key:'peralatanDetail', title:'Peralatan', columns:[
+      {field:'namaAlat', label:'Peralatan', type:'externalInventaris'},
+      {field:'nomorInventaris', label:'Nomor Inventaris', type:'text'},
+      {field:'tanggalKalibrasi', label:'Tanggal Kalibrasi', type:'externalKalibrasiDate'},
+      {field:'tanggalKualifikasi', label:'Tanggal Kualifikasi', type:'text'},
+    ]},
+    { key:'saranaPenunjang', title:'Sarana Penunjang', columns:[
+      {field:'peralatan', label:'Peralatan', type:'externalSaranaPenunjang'},
+      {field:'jenisDokumen', label:'Jenis Dokumen', type:'fixedselect', options:['IQ','OQ','PQ']},
+      {field:'nomorDokumenReferensi', label:'Nomor Dokumen Referensi', type:'text'},
+      {field:'tanggal', label:'Tanggal', type:'date'},
+    ]},
+    { key:'cpp', title:'CPP — Critical Process Parameter', columns:[
+      {field:'tahapanProses', label:'Tahapan Proses', type:'select', cat:'cppTahapan'},
+      {field:'parameterKritis', label:'Parameter Kritis (CPP)', type:'select', cat:'cppParameter'},
+      {field:'targetBatasKendali', label:'Target/Batas Kendali', type:'text'},
+      {field:'hasilAktual', label:'Hasil Aktual', type:'text'},
+      {field:'status', label:'Status', type:'fixedselect', options:['MS','TMS']},
+      {field:'keterangan', label:'Keterangan', type:'text'},
+      {field:'pic', label:'PIC', type:'text'},
+    ]},
+    { key:'pengujianSampling', title:'Pengujian Sampling', columns:[
+      {field:'titikSampling', label:'Titik Sampling', type:'text'},
+      {field:'keterangan', label:'Keterangan', type:'text'},
+      {field:'bobotPengambilan', label:'Bobot Pengambilan (gram)', type:'text'},
+      {field:'petugas', label:'Petugas', type:'text'},
+      {field:'ipc', label:'IPC', type:'text'},
+    ]},
+    { key:'cqaTable', title:'CQA — Critical Quality Attribute', columns:[
+      {field:'parameterCQA', label:'Parameter CQA', type:'select', cat:'cqaParameter'},
+      {field:'spesifikasi', label:'Spesifikasi', type:'text'},
+      {field:'hasilAktual', label:'Hasil Aktual', type:'text'},
+      {field:'status', label:'Status', type:'fixedselect', options:['MS','TMS']},
+      {field:'pic', label:'PIC', type:'text'},
+      {field:'keterangan', label:'Keterangan', type:'text'},
+    ]},
+  ];
+
+  let state = {
+    siteLoggedIn: false, siteLoginError: '',
+    tab: 'master',
+    products: [], lockqa: [],
+    categories: { merk:[], namaProduk:[], bentukSediaan:[], batchSize:[], lokasiProduksi:[], peralatan:[], utilitas:[], tahapan:[], kebersihan:[], cppTahapan:[], cppParameter:[], cqaParameter:[], hasilValidasiKriteria:[] },
+    loading: true,
+    drawerOpen: false, editingProduct: null,
+    lockLoggedIn: false, lockLoginError: '', lockDrawerOpen: false, editingLock: null,
+    toast: null,
+    scriptUrl: '',
+    settingsOpen: false, settingsUnlocked: false, settingsPassError: '', revealSecrets: false,
+    syncing: false, syncError: '',
+    searchQuery: '',
+    showArchived: false,
+    jadwalKalibrasi: [],
+    kalibrasiDept: 'PRD',
+    kalibrasiShowArchived: false,
+    inventarisMaster: [],
+    dataPeralatan: [],
+    saranaPenunjangMaster: [],
+    peralatanSaranaSubTab: 'peralatan',
+    dataPeralatanShowArchived: false,
+    saranaPenunjangShowArchived: false,
+    categoryModalOpen: false,
+    externalLists: { bahanBaku:[], produkRuahan:[], produkJadi:[], dpi:[], ppi:[], cpb:[] },
+    detailProductName: '',
+  };
+
+  const uid = () => 'p_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+
+  function showToast(msg){ state.toast = msg; render(); setTimeout(()=>{ state.toast = null; render(); }, 2600); }
+
+  /* ---------------- SYNC LAYER ---------------- */
+  /* Penyimpanan konfigurasi yang bekerja baik di dalam Claude (window.storage)
+     maupun saat di-hosting sendiri di luar Claude (GitHub Pages, Netlify, dll)
+     dengan fallback ke localStorage biasa. */
+  // URL default Apps Script — dipakai kalau belum ada yang tersimpan di browser/perangkat ini.
+  // Bisa tetap diganti manual lewat ⚙ Pengaturan kalau suatu saat perlu pindah ke Apps Script lain.
+  const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymG2i_xn5g4qeOECHm_Zlaos7fkWQKYwukRpnZ_OXnMRXhPpQMer5_hvunCVlMUk-IWg/exec";
+
+  const hasClaudeStorage = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function');
+
+  async function configGet(key){
+    if(hasClaudeStorage){
+      try{ const r = await window.storage.get(key, true); return r ? r.value : ''; }catch(e){ return ''; }
+    }
+    try{ return localStorage.getItem(key) || ''; }catch(e){ return ''; }
+  }
+
+  async function configSet(key, value){
+    if(hasClaudeStorage){
+      try{ await window.storage.set(key, value, true); return; }catch(e){ /* fall through */ }
+    }
+    try{ localStorage.setItem(key, value); }catch(e){ /* storage unavailable, ignore */ }
+  }
+
+  async function loadScriptUrlConfig(){
+    const stored = await configGet('sheets-script-url');
+    state.scriptUrl = stored || DEFAULT_SCRIPT_URL;
+  }
+
+  async function loadAll(){
+    state.loading = true; render();
+    await loadScriptUrlConfig();
+    if(!state.scriptUrl){ state.loading = false; render(); return; }
+    await refreshFromSheet();
+    state.loading = false; render();
+  }
+
+  async function checkPassword(type, password){
+    if(!state.scriptUrl) return null;
+    try{
+      const res = await fetch(state.scriptUrl, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'checkPassword', type, password }) });
+      const json = await res.json();
+      if(json && json.ok) return !!json.valid;
+      return null;
+    }catch(e){ return null; }
+  }
+
+  async function refreshFromSheet(){
+    if(!state.scriptUrl) return;
+    state.syncing = true; state.syncError=''; render();
+    try{
+      const res = await fetch(state.scriptUrl, { method:'GET' });
+      const data = await res.json();
+      if(data && data.ok){
+        state.products = data.products || [];
+        state.lockqa = data.lockqa || [];
+        state.jadwalKalibrasi = data.jadwalKalibrasi || [];
+        state.dataPeralatan = data.dataPeralatan || [];
+        state.saranaPenunjangMaster = data.saranaPenunjangMaster || [];
+        state.inventarisMaster = data.inventarisMaster || [];
+        const defaults = { merk:[], namaProduk:[], bentukSediaan:[], batchSize:[], lokasiProduksi:[], peralatan:[], utilitas:[], tahapan:[], kebersihan:[], cppTahapan:[], cppParameter:[], cqaParameter:[], hasilValidasiKriteria:[] };
+        state.categories = Object.assign(defaults, data.categories || {});
+        state.externalLists = Object.assign({ bahanBaku:[], produkRuahan:[], produkJadi:[], dpi:[], ppi:[], cpb:[] }, data.externalLists || {});
+      } else {
+        state.syncError = (data && data.error) || 'Gagal memuat data dari Sheet.';
+      }
+    }catch(e){ state.syncError = 'Tidak bisa terhubung ke Google Sheets. Periksa URL Apps Script.'; }
+    state.syncing = false; render();
+  }
+
+  async function postToSheet(action, data){
+    if(!state.scriptUrl){ showToast('Atur URL Apps Script dulu di ⚙ Pengaturan.'); return false; }
+    state.syncing = true; render();
+    try{
+      const res = await fetch(state.scriptUrl, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action, data }) });
+      const json = await res.json();
+      state.syncing = false;
+      if(!json || !json.ok){ showToast('Gagal sync ke Sheet: ' + ((json&&json.error)||'unknown error')); return false; }
+      return true;
+    }catch(e){ state.syncing = false; showToast('Gagal terhubung ke Google Sheets.'); return false; }
+  }
+
+  async function saveProducts(){ await postToSheet('saveProducts', state.products); }
+  async function saveLockQA(){ await postToSheet('saveLockQA', state.lockqa); }
+  async function saveJadwalKalibrasi(){ await postToSheet('saveJadwalKalibrasi', state.jadwalKalibrasi); }
+  async function saveDataPeralatan(){ await postToSheet('saveDataPeralatan', state.dataPeralatan); }
+  async function saveSaranaPenunjangMaster(){ await postToSheet('saveSaranaPenunjangMaster', state.saranaPenunjangMaster); }
+  async function saveCategories(){ await postToSheet('saveCategories', state.categories); }
+  async function saveScriptConfig(url){
+    state.scriptUrl = url.trim();
+    try{ await configSet('sheets-script-url', state.scriptUrl); }catch(e){}
+    if(state.scriptUrl){ await refreshFromSheet(); }
+  }
+
+  /* ---------------- HELPERS ---------------- */
+  function emptyRowFor(cfg){ const row={}; cfg.columns.forEach(c=>row[c.field]=''); return row; }
+
+  function todayISO(){
+    const d = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+
+  function emptyProduct(){
+    const p = {
+      id: uid(), _kodeAuto: true, deleted: false,
+      tanggalIsi: todayISO(), kode:'', merk:'', namaProduk:'', namaProdukLengkapOverride:'',
+      bentukSediaan:'', batchSize:'', lokasiProduksi:'',
+      jadwal: [ {tahapan:'Validasi Proses 1', tanggal:'', nomorBatch:''} ],
+      keteranganValidasi:'',
+      dpi:'', ppi:'', spesifikasiRuahan:'', cpb:'', spesifikasiProdukJadi:'',
+      tanggalSampling:'',
+      yieldData: {bobotTeoritis:'', bobotAktual:'', selisih:'', rekonsiliasi:'', keterangan:''},
+      kondisiRuangan: {
+        penimbangan: {suhu:'', rh:'', kebersihanArea:'', kebersihanMesin:'', diperiksaOleh:''},
+        pengolahan: {suhu:'', rh:'', kebersihanArea:'', kebersihanMesin:'', diperiksaOleh:''}
+      },
+      hasilValidasi: {
+        cpp: {kriteria:'', hasilAktual:'', status:'', pemeriksa:''},
+        cqa: {kriteria:'', hasilAktual:'', status:'', pemeriksa:''},
+        yieldRow: {kriteria:'', hasilAktual:'', status:'', pemeriksa:''},
+        deviasi: {kriteria:'', hasilAktual:'', status:'', pemeriksa:''}
+      },
+      evaluasiKesimpulan:'', rekomendasi:'',
+      alurProsesTahapan: ['']
+    };
+    DYNAMIC_TABLES.forEach(cfg=>{ p[cfg.key] = [emptyRowFor(cfg)]; });
+    return p;
+  }
+
+  function ensureExtraSections(product){
+    DYNAMIC_TABLES.forEach(cfg=>{
+      if(!Array.isArray(product[cfg.key]) || product[cfg.key].length===0) product[cfg.key] = [emptyRowFor(cfg)];
+    });
+    if(!Array.isArray(product.alurProsesTahapan) || product.alurProsesTahapan.length===0) product.alurProsesTahapan = [''];
+    if(!product.yieldData) product.yieldData = {bobotTeoritis:'', bobotAktual:'', selisih:'', rekonsiliasi:'', keterangan:''};
+    if(!product.kondisiRuangan) product.kondisiRuangan = { penimbangan:{suhu:'',rh:'',kebersihanArea:'',kebersihanMesin:'',diperiksaOleh:''}, pengolahan:{suhu:'',rh:'',kebersihanArea:'',kebersihanMesin:'',diperiksaOleh:''} };
+    if(!product.hasilValidasi) product.hasilValidasi = {
+      cpp:{kriteria:'',hasilAktual:'',status:'',pemeriksa:''}, cqa:{kriteria:'',hasilAktual:'',status:'',pemeriksa:''},
+      yieldRow:{kriteria:'',hasilAktual:'',status:'',pemeriksa:''}, deviasi:{kriteria:'',hasilAktual:'',status:'',pemeriksa:''}
+    };
+    if(product.evaluasiKesimpulan===undefined) product.evaluasiKesimpulan = '';
+    if(product.cpb===undefined) product.cpb = '';
+    if(product.deleted===undefined) product.deleted = false;
+    if(product.spesifikasiProdukJadi===undefined) product.spesifikasiProdukJadi = '';
+    if(product.rekomendasi===undefined) product.rekomendasi = '';
+  }
+
+  function fullName(p){
+    if(p.namaProdukLengkapOverride && p.namaProdukLengkapOverride.trim()) return p.namaProdukLengkapOverride;
+    return [p.merk, p.namaProduk].filter(Boolean).join(' ');
+  }
+
+  function numberToLetters(n){ let s=''; while(n>0){ n--; s=String.fromCharCode(65+(n%26))+s; n=Math.floor(n/26);} return s; }
+
+  function computeAutoKode(namaProduk, excludeId){
+    const key = String(namaProduk||'').trim().toLowerCase();
+    if(!key) return '';
+    const relevant = state.products.filter(p => p.id !== excludeId);
+    const order = [];
+    relevant.forEach(p=>{ const k = String(p.namaProduk||'').trim().toLowerCase(); if(k && !order.includes(k)) order.push(k); });
+    let idx = order.indexOf(key); let isNewGroup = false;
+    if(idx === -1){ idx = order.length; isNewGroup = true; }
+    const letter = numberToLetters(idx + 1);
+    const countInGroup = relevant.filter(p => String(p.namaProduk||'').trim().toLowerCase() === key).length;
+    const number = isNewGroup ? 1 : countInGroup + 1;
+    return letter + number;
+  }
+
+  function tahapanOptions(){ return (state.categories.tahapan && state.categories.tahapan.length) ? state.categories.tahapan : DEFAULT_TAHAPAN; }
+
+  function syncJadwalWithTahapanOptions(product){
+    const opts = tahapanOptions();
+    const existing = product.jadwal || [];
+    product.jadwal = opts.map(t => {
+      const found = existing.find(j => String(j.tahapan||'').trim().toLowerCase() === t.trim().toLowerCase());
+      return { tahapan: t, tanggal: found ? found.tanggal : '', nomorBatch: found ? (found.nomorBatch||'') : '' };
+    });
+  }
+
+  function lockStatusFor(productId){
+    const related = state.lockqa.filter(r => r.kodeId === productId);
+    if(related.length === 0) return { label:'Belum ada pengajuan', cls:'st-none', related };
+    const hasAcc = related.some(r=>r.status==='Acc Supervisor QA');
+    const hasReject = related.some(r=>r.status==='Ditolak');
+    if(hasAcc) return { label:'Acc Supervisor QA', cls:'st-acc', related };
+    if(hasReject && related.every(r=>r.status==='Ditolak')) return { label:'Ditolak', cls:'st-reject', related };
+    return { label:'Menunggu', cls:'st-wait', related };
+  }
+
+  function matchesSearch(p, q){
+    if(!q) return true;
+    const hay = [p.kode, p.merk, p.namaProduk, fullName(p), p.batchSize, p.lokasiProduksi, p.dpi, p.ppi, p.spesifikasiRuahan, p.keteranganValidasi, p.bentukSediaan].join(' ').toLowerCase();
+    return hay.includes(q.toLowerCase());
+  }
+
+  function escapeHtml(str){ return String(str==null?'':str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function escAttr(str){ return escapeHtml(str); }
+
+  function optionsHtml(list, selected, addNewLabel){
+    let html = `<option value="">— pilih —</option>`;
+    (list||[]).forEach(v=>{ html += `<option value="${escAttr(v)}" ${selected===v?'selected':''}>${escapeHtml(v)}</option>`; });
+    html += `<option value="__add_new__">${addNewLabel || '+ Tambah baru…'}</option>`;
+    return html;
+  }
+  function optionsHtmlFixed(options, selected){
+    let html = `<option value="">— pilih —</option>`;
+    (options||[]).forEach(v=>{ html += `<option value="${escAttr(v)}" ${selected===v?'selected':''}>${escapeHtml(v)}</option>`; });
+    return html;
+  }
+
+  function externalDocOptionsHtml(list, selectedValue){
+    let html = `<option value="">— pilih —</option>`;
+    (list||[]).forEach(item=>{
+      const label = `${item.nama} — ${item.dokumen}`;
+      html += `<option value="${escAttr(item.dokumen)}" ${selectedValue===item.dokumen?'selected':''}>${escapeHtml(label)}</option>`;
+    });
+    if(selectedValue && !(list||[]).some(i=>i.dokumen===selectedValue)){
+      html += `<option value="${escAttr(selectedValue)}" selected>${escapeHtml(selectedValue)} (manual)</option>`;
+    }
+    html += `<option value="__manual__">+ Isi manual…</option>`;
+    return html;
+  }
+
+  function externalDocDatalistInput(fieldName, list, selectedValue, listId){
+    const opts = (list||[]).map(item=>`<option value="${escAttr(item.dokumen)}">${escapeHtml(item.nama)}</option>`).join('');
+    return `<input type="text" list="${listId}" data-field-external="${fieldName}" value="${escAttr(selectedValue)}" placeholder="Ketik nama produk / no. dokumen…"><datalist id="${listId}">${opts}</datalist>`;
+  }
+
+  function externalBahanBakuOptionsHtml(list, selectedKode){
+    let html = `<option value="">— pilih —</option>`;
+    (list||[]).forEach(item=>{
+      const label = `${item.kode} — ${item.nama}`;
+      html += `<option value="${escAttr(item.kode)}" ${selectedKode===item.kode?'selected':''}>${escapeHtml(label)}</option>`;
+    });
+    if(selectedKode && !(list||[]).some(i=>i.kode===selectedKode)){
+      html += `<option value="${escAttr(selectedKode)}" selected>${escapeHtml(selectedKode)} (manual)</option>`;
+    }
+    html += `<option value="__manual__">+ Isi manual…</option>`;
+    return html;
+  }
+
+  function getNested(obj, path){ return path.split('.').reduce((o,k)=> (o==null?o:o[k]), obj); }
+  function setNested(obj, path, val){
+    const parts = path.split('.'); let o = obj;
+    for(let i=0;i<parts.length-1;i++){ o = o[parts[i]]; }
+    o[parts[parts.length-1]] = val;
+  }
+
+  const CATEGORY_USAGE = {
+    merk: [{ path:'merk' }],
+    namaProduk: [{ path:'namaProduk' }],
+    bentukSediaan: [{ path:'bentukSediaan' }],
+    batchSize: [{ path:'batchSize' }],
+    lokasiProduksi: [{ path:'lokasiProduksi' }],
+    peralatan: [{ table:'peralatanDetail', field:'namaAlat' }],
+    utilitas: [{ table:'saranaPenunjang', field:'peralatan' }],
+    tahapan: [{ table:'jadwal', field:'tahapan' }],
+    cppTahapan: [{ table:'cpp', field:'tahapanProses' }],
+    cppParameter: [{ table:'cpp', field:'parameterKritis' }],
+    cqaParameter: [{ table:'cqaTable', field:'parameterCQA' }],
+  };
+
+  function cascadeCategoryRename(type, oldValue, newValue){
+    const usages = CATEGORY_USAGE[type] || [];
+    let changed = false;
+    state.products.forEach(p=>{
+      usages.forEach(u=>{
+        if(u.path){
+          if(p[u.path] === oldValue){ p[u.path] = newValue; changed = true; }
+        } else if(u.table){
+          (p[u.table]||[]).forEach(row=>{
+            if(row[u.field] === oldValue){ row[u.field] = newValue; changed = true; }
+          });
+        }
+      });
+    });
+    return changed;
+  }
+
+  function categoryLabel(type){
+    return {
+      merk:'Merk', namaProduk:'Nama Produk', bentukSediaan:'Bentuk Sediaan', batchSize:'Batch Size (kg)', lokasiProduksi:'Lokasi Produksi',
+      peralatan:'Peralatan', utilitas:'Utilitas', tahapan:'Kategori Tahapan', kebersihan:'Kebersihan (Area/Mesin)', hasilValidasiKriteria:'Hasil Validasi Proses — Kriteria',
+      cppTahapan:'CPP — Tahapan Proses', cppParameter:'CPP — Parameter Kritis', cqaParameter:'CQA — Parameter CQA'
+    }[type] || type;
+  }
+
+  function renderDynColCell(cfg, col, row, idx){
+    const val = row[col.field]||'';
+    if(col.type==='select'){
+      return `<td><select data-dyn="${cfg.key}:${col.field}" data-idx="${idx}">${optionsHtml(state.categories[col.cat], val)}</select></td>`;
+    }
+    if(col.type==='fixedselect'){
+      return `<td><select data-dyn="${cfg.key}:${col.field}" data-idx="${idx}">${optionsHtmlFixed(col.options, val)}</select></td>`;
+    }
+    if(col.type==='externalBahanBaku'){
+      const listId = `dl_${cfg.key}_${col.field}_${idx}`;
+      const opts = (state.externalLists.bahanBaku||[]).map(item=>`<option value="${escAttr(item.kode)}">${escapeHtml(item.nama)}</option>`).join('');
+      return `<td><input type="text" list="${listId}" data-dyn="${cfg.key}:${col.field}" data-idx="${idx}" value="${escAttr(val)}" placeholder="Ketik kode/nama bahan…"><datalist id="${listId}">${opts}</datalist></td>`;
+    }
+    if(col.type==='externalBahanBakuDoc'){
+      const listId = `dl_${cfg.key}_${col.field}_${idx}`;
+      const seen = new Set();
+      const opts = (state.externalLists.bahanBaku||[]).filter(item=>{
+        if(!item.dokumen || seen.has(item.dokumen)) return false;
+        seen.add(item.dokumen); return true;
+      }).map(item=>`<option value="${escAttr(item.dokumen)}">${escapeHtml(item.kode)} — ${escapeHtml(item.nama)}</option>`).join('');
+      return `<td><input type="text" list="${listId}" data-dyn="${cfg.key}:${col.field}" data-idx="${idx}" value="${escAttr(val)}" placeholder="Ketik/pilih no. dokumen…"><datalist id="${listId}">${opts}</datalist></td>`;
+    }
+    if(col.type==='externalInventaris'){
+      const listId = `dl_${cfg.key}_${col.field}_${idx}`;
+      const seen = new Set();
+      const opts = (state.inventarisMaster||[]).filter(item=>{
+        if(!item.namaInventaris || seen.has(item.namaInventaris)) return false;
+        seen.add(item.namaInventaris); return true;
+      }).map(item=>`<option value="${escAttr(item.namaInventaris)}">${escapeHtml(item.nomorInventaris)}</option>`).join('');
+      return `<td><input type="text" list="${listId}" data-dyn="${cfg.key}:${col.field}" data-idx="${idx}" value="${escAttr(val)}" placeholder="Ketik/pilih nama alat…"><datalist id="${listId}">${opts}</datalist></td>`;
+    }
+    if(col.type==='externalKalibrasiDate'){
+      const listId = `dl_${cfg.key}_${col.field}_${idx}`;
+      const relevant = (state.jadwalKalibrasi||[]).filter(k=>!k.deleted && k.calDate);
+      const opts = relevant.map(k=>`<option value="${escAttr(formatDateID(k.calDate))}">${escapeHtml(k.namaAlat)} - ${escapeHtml(k.departemen)}</option>`).join('');
+      return `<td><input type="text" list="${listId}" data-dyn="${cfg.key}:${col.field}" data-idx="${idx}" value="${escAttr(val)}" placeholder="Ketik/pilih tanggal…"><datalist id="${listId}">${opts}</datalist></td>`;
+    }
+    if(col.type==='externalSaranaPenunjang'){
+      const listId = `dl_${cfg.key}_${col.field}_${idx}`;
+      const seen = new Set();
+      const opts = (state.saranaPenunjangMaster||[]).filter(item=>{
+        if(!item.namaSarana || seen.has(item.namaSarana)) return false;
+        seen.add(item.namaSarana); return true;
+      }).map(item=>`<option value="${escAttr(item.namaSarana)}"></option>`).join('');
+      return `<td><input type="text" list="${listId}" data-dyn="${cfg.key}:${col.field}" data-idx="${idx}" value="${escAttr(val)}" placeholder="Ketik/pilih sarana penunjang…"><datalist id="${listId}">${opts}</datalist></td>`;
+    }
+    const inputType = col.type==='date' ? 'date' : 'text';
+    return `<td><input type="${inputType}" data-dyn="${cfg.key}:${col.field}" data-idx="${idx}" value="${escAttr(val)}"></td>`;
+  }
+
+  function autofillSaranaPenunjangRow(idx){
+    const row = state.editingProduct.saranaPenunjang[idx];
+    if(!row || !row.peralatan || !row.jenisDokumen) return;
+    const match = (state.saranaPenunjangMaster||[]).find(m=>!m.deleted && m.namaSarana===row.peralatan && m.jenisDokumen===row.jenisDokumen);
+    if(match){
+      row.nomorDokumenReferensi = match.nomorDokumenReferensi || '';
+      row.tanggal = match.tanggal || '';
+      render();
+    }
+  }
+
+  function findPreviousProductWithData(namaProduk, excludeId, tableKey){
+    const key = String(namaProduk||'').trim().toLowerCase();
+    if(!key) return null;
+    const matches = state.products.filter(p =>
+      p.id !== excludeId && !p.deleted &&
+      String(p.namaProduk||'').trim().toLowerCase() === key &&
+      (p[tableKey]||[]).some(row => Object.values(row).some(v=>v))
+    );
+    return matches.length ? matches[matches.length-1] : null;
+  }
+
+  function ensureSpesifikasiBahanBakuRow(kode){
+    if(!kode) return;
+    const list = state.editingProduct.spesifikasiBahanBaku;
+    const alreadyExists = list.some(r => r.kodeBahan === kode);
+    if(alreadyExists) return;
+    const match = (state.externalLists.bahanBaku||[]).find(i=>i.kode===kode);
+    const newRow = {
+      kodeBahan: kode,
+      namaDagang: match ? (match.nama||'') : '',
+      namaProdusen: match ? (match.produsen||'') : '',
+      namaSupplier: match ? (match.pemasok||'') : '',
+      noDokumen: ''
+    };
+    // buang baris kosong placeholder pertama kalau masih benar-benar kosong
+    if(list.length===1 && !list[0].kodeBahan && !list[0].namaDagang && !list[0].namaProdusen && !list[0].namaSupplier && !list[0].noDokumen){
+      list.splice(0,1);
+    }
+    list.push(newRow);
+  }
+
+  function computeFormulaTotals(rows){
+    let totalPercent = 0, totalGram = 0;
+    (rows||[]).forEach(r=>{
+      const pct = parseFloat(r.konsentrasiPercent);
+      const g = parseFloat(r.jumlahG);
+      if(!isNaN(pct)) totalPercent += pct;
+      if(!isNaN(g)) totalGram += g;
+    });
+    return { totalPercent, totalGram };
+  }
+
+  function formatDateID(isoStr){
+    if(!isoStr) return '';
+    const m = String(isoStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return isoStr;
+    return `${m[3]}-${m[2]}-${m[1]}`;
+  }
+
+  function formatNum(n){
+    return (Math.round(n * 100) / 100).toString();
+  }
+
+  function moveRowButtonsHtml(action, extraAttrs, idx, len){
+    const upDisabled = idx === 0 ? 'disabled' : '';
+    const downDisabled = idx === len-1 ? 'disabled' : '';
+    return `<button class="icon-btn" data-action="${action}-up" ${extraAttrs} data-idx="${idx}" ${upDisabled} title="Naik">↑</button>
+      <button class="icon-btn" data-action="${action}-down" ${extraAttrs} data-idx="${idx}" ${downDisabled} title="Turun">↓</button>`;
+  }
+
+  function moveArrayItem(arr, idx, dir){
+    const newIdx = idx + dir;
+    if(newIdx < 0 || newIdx >= arr.length) return;
+    const tmp = arr[idx];
+    arr[idx] = arr[newIdx];
+    arr[newIdx] = tmp;
+  }
+
+  function renderDynTableSection(product, cfg, num){
+    const len = product[cfg.key].length;
+    const rows = product[cfg.key].map((row,i)=>{
+      const cells = cfg.columns.map(col=>renderDynColCell(cfg, col, row, i)).join('');
+      return `<tr><td style="width:30px;text-align:center;color:var(--text-muted);font-size:12px">${i+1}</td>${cells}<td style="width:112px"><div class="actions-cell">${moveRowButtonsHtml('move-dyn-row', `data-table="${cfg.key}"`, i, len)}<button class="row-remove" data-action="remove-dyn-row" data-table="${cfg.key}" data-idx="${i}">✕</button></div></td></tr>`;
+    }).join('');
+    const headers = `<th style="width:30px">No.</th>` + cfg.columns.map(c=>`<th>${c.label}</th>`).join('') + `<th></th>`;
+    const isFormula = cfg.key === 'formula';
+    const hintHtml = isFormula
+      ? `<p class="hint">Ketik untuk cari Kode/Nama Bahan Baku. Kode yang dipilih di sini otomatis ditambahkan ke tabel Spesifikasi Bahan Baku.</p>`
+      : cfg.key === 'spesifikasiBahanBaku'
+        ? `<p class="hint">Ketik untuk cari Kode/Nama Bahan Baku — Nama Dagang, Produsen, Supplier, dan No. Dokumen otomatis terisi.</p>`
+        : cfg.key === 'peralatanDetail'
+          ? `<p class="hint">Ketik untuk cari nama alat dari Daftar Induk Inventaris. Nomor Inventaris otomatis terisi. Tanggal Kalibrasi bisa pilih/ketik manual dari seluruh data Jadwal Kalibrasi (tampil sebagai "Nama Alat - Departemen"). Tanggal Kualifikasi dicoba diisi otomatis, kalau kosong bisa ketik manual.</p>`
+          : cfg.key === 'saranaPenunjang'
+            ? `<p class="hint">Ketik untuk cari nama sarana penunjang dari data master. Nomor Dokumen & Tanggal otomatis terisi kalau Jenis Dokumen (IQ/OQ/PQ) cocok.</p>`
+            : '';
+    const totalsHtml = isFormula ? (() => {
+      const t = computeFormulaTotals(product.formula);
+      return `<div id="formulaTotals" style="margin-top:8px;padding:10px 14px;background:var(--primary-tint);border-radius:8px;font-size:13px;font-weight:600;color:var(--primary-dark);display:flex;gap:24px">
+        <span>Total Konsentrasi: <span id="formulaTotalPercent">${formatNum(t.totalPercent)}</span>%</span>
+        <span>Total Jumlah: <span id="formulaTotalGram">${formatNum(t.totalGram)}</span> g</span>
+      </div>`;
+    })() : '';
+    return `
+      <div class="section-title"><span class="n">${num}</span> ${cfg.title}</div>
+      ${hintHtml}
+      <div class="table-wrap"><table class="mini-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>
+      <button class="add-row-btn" data-action="add-dyn-row" data-table="${cfg.key}">+ Tambah Baris</button>
+      ${totalsHtml}
+    `;
+  }
+
+  function renderDynTableView(product, cfg){
+    const list = (product[cfg.key]||[]).filter(row => cfg.columns.some(c=>row[c.field]));
+    const rows = list.map((row,i)=>{
+      const cells = cfg.columns.map(c=>`<td>${escapeHtml((c.type==='date' ? formatDateID(row[c.field]) : row[c.field])||'-')}</td>`).join('');
+      return `<tr><td>${i+1}</td>${cells}</tr>`;
+    }).join('') || `<tr><td colspan="${cfg.columns.length+1}" style="color:var(--text-muted)">Belum ada data.</td></tr>`;
+    const headers = `<th>No.</th>` + cfg.columns.map(c=>`<th>${c.label}</th>`).join('');
+    return `<div class="section-title">${cfg.title}</div><div class="table-wrap"><table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  function escapeSvgText(s){ const t = String(s).length>36 ? String(s).slice(0,35)+'…' : String(s); return escapeHtml(t); }
+
+  function buildFlowchartSVG(steps){
+    const valid = (steps||[]).filter(s=>s && s.trim());
+    if(valid.length===0) return `<div class="hint">Belum ada tahapan diisi.</div>`;
+    const boxW=300, boxH=54, gapY=34, padX=16, padY=16;
+    const totalH = valid.length*boxH + (valid.length-1)*gapY + padY*2;
+    const totalW = boxW + padX*2;
+    let svg = `<svg viewBox="0 0 ${totalW} ${totalH}" width="100%" style="max-width:440px;display:block" xmlns="http://www.w3.org/2000/svg">`;
+    svg += `<defs><marker id="flowArrow" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#0F5C5C"/></marker></defs>`;
+    valid.forEach((step,i)=>{
+      const y = padY + i*(boxH+gapY);
+      svg += `<rect x="${padX}" y="${y}" width="${boxW}" height="${boxH}" rx="10" fill="#E4EFEE" stroke="#0F5C5C" stroke-width="1.5"/>`;
+      svg += `<text x="${padX+boxW/2}" y="${y+boxH/2+5}" text-anchor="middle" font-size="13" font-family="IBM Plex Sans, sans-serif" fill="#0A4141">${escapeSvgText(step)}</text>`;
+      if(i < valid.length-1){
+        const x = padX+boxW/2;
+        svg += `<line x1="${x}" y1="${y+boxH}" x2="${x}" y2="${y+boxH+gapY-2}" stroke="#0F5C5C" stroke-width="2" marker-end="url(#flowArrow)"/>`;
+      }
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  function renderFlowchartStepsSection(p, num){
+    const len = p.alurProsesTahapan.length;
+    const rows = p.alurProsesTahapan.map((step,i)=>`
+      <tr>
+        <td style="width:30px;text-align:center;color:var(--text-muted);font-size:12px">${i+1}</td>
+        <td><input type="text" data-flow-idx="${i}" value="${escAttr(step)}" placeholder="mis. Penimbangan bahan baku"></td>
+        <td style="width:112px"><div class="actions-cell">${moveRowButtonsHtml('move-flow-step', '', i, len)}<button class="row-remove" data-action="remove-flow-step" data-idx="${i}">✕</button></div></td>
+      </tr>
+    `).join('');
+    return `
+      <div class="section-title"><span class="n">${num}</span> Bagan Alur Proses</div>
+      <p class="hint">Isi tiap tahapan secara berurutan — otomatis digambar jadi bagan alur di bawah.</p>
+      <table class="mini-table"><thead><tr><th style="width:30px">No.</th><th>Tahapan</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+      <button class="add-row-btn" data-action="add-flow-step">+ Tambah Tahapan</button>
+      <div id="flowchartPreview" style="margin-top:16px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px">${buildFlowchartSVG(p.alurProsesTahapan)}</div>
+    `;
+  }
+
+  function renderFixedFieldsGroup(title, basePath, product, fields){
+    const inputs = fields.map(f=>{
+      const path = basePath + '.' + f.field;
+      const val = getNested(product, path) || '';
+      if(f.type === 'select'){
+        return `<div class="field"><label>${f.label}</label><select data-nested="${path}" data-cat="${f.cat}">${optionsHtml(state.categories[f.cat], val)}</select></div>`;
+      }
+      return `<div class="field"><label>${f.label}</label><input type="text" data-nested="${path}" value="${escAttr(val)}"></div>`;
+    }).join('');
+    return `<div style="margin-bottom:16px"><div style="font-weight:600;font-size:13px;margin-bottom:8px">${title}</div><div class="grid3">${inputs}</div></div>`;
+  }
+
+  /* ============================================================
+     EXPORT KE WORD (.docx) & PDF (cetak browser)
+     ============================================================ */
+  function buildReportSections(p){
+    const rowsFrom = (list, cfg) => (list||[]).filter(r=>cfg.columns.some(c=>r[c.field]))
+      .map((r,i)=>[String(i+1)].concat(cfg.columns.map(c=>c.type==='date' ? formatDateID(r[c.field]) : (r[c.field]||''))));
+
+    const cfgFormula = DYNAMIC_TABLES[0], cfgSpes = DYNAMIC_TABLES[1], cfgPeralatan = DYNAMIC_TABLES[2],
+      cfgSarana = DYNAMIC_TABLES[3], cfgCpp = DYNAMIC_TABLES[4], cfgSampling = DYNAMIC_TABLES[5], cfgCqa = DYNAMIC_TABLES[6];
+
+    const kr = p.kondisiRuangan || {penimbangan:{},pengolahan:{}};
+    const y = p.yieldData || {};
+    const hv = p.hasilValidasi || {};
+
+    return {
+      header: {
+        namaProduk: fullName(p), bentukSediaan: p.bentukSediaan,
+        batchSize: p.batchSize, lokasi: p.lokasiProduksi
+      },
+      A: { title:'Formula', headers:['No.','Kode Bahan Baku','Konsentrasi (%)','Jumlah (g)'], rows: rowsFrom(p.formula, cfgFormula), totals: computeFormulaTotals(p.formula) },
+      B: { title:'Spesifikasi Bahan Baku', headers:['No.','Kode Bahan','Nama Dagang','Nama Produsen','Nama Supplier','Nomor Dokumen'], rows: rowsFrom(p.spesifikasiBahanBaku, cfgSpes) },
+      C: { title:'Peralatan', headers:['No.','Peralatan','Nomor Inventaris','Tanggal Kalibrasi','Tanggal Kualifikasi'], rows: rowsFrom(p.peralatanDetail, cfgPeralatan) },
+      D: { title:'Sarana Penunjang', headers:['No.','Peralatan','Jenis Dokumen','Nomor Dokumen Referensi','Tanggal'], rows: rowsFrom(p.saranaPenunjang, cfgSarana) },
+      E: { title:'Kondisi Ruangan', headers:['Ruangan','Suhu Ruangan (15-25 °C)','Kelembaban/RH (45-65%)','Kebersihan Area','Kebersihan Mesin','Diperiksa Oleh'],
+        rows:[
+          ['Penimbangan', kr.penimbangan.suhu||'', kr.penimbangan.rh||'', kr.penimbangan.kebersihanArea||'', kr.penimbangan.kebersihanMesin||'', kr.penimbangan.diperiksaOleh||''],
+          ['Pengolahan', kr.pengolahan.suhu||'', kr.pengolahan.rh||'', kr.pengolahan.kebersihanArea||'', kr.pengolahan.kebersihanMesin||'', kr.pengolahan.diperiksaOleh||''],
+        ] },
+      F: { title:'Bagan Alur Proses', steps: (p.alurProsesTahapan||[]).filter(s=>s&&s.trim()) },
+      G: { title:'Critical Process Parameter (CPP)', headers:['No.','Tahapan Proses','Parameter Kritis (CPP)','Target/Batas Kendali','Hasil Aktual','Status','Keterangan','PIC'], rows: rowsFrom(p.cpp, cfgCpp) },
+      H: { title:'Pengujian Sampling', tanggalSampling: formatDateID(p.tanggalSampling), headers:['No.','Titik Sampling','Keterangan','Bobot Pengambilan (gram)','Petugas','IPC'], rows: rowsFrom(p.pengujianSampling, cfgSampling) },
+      I: { title:'Critical Quality Atribute (CQA)', headers:['No.','Parameter CQA','Spesifikasi','Hasil Aktual','Status','PIC','Keterangan'], rows: rowsFrom(p.cqaTable, cfgCqa) },
+      J: { title:'Perhitungan Yield', headers:['Parameter','Hasil','Keterangan'],
+        rows:[
+          ['Bobot Teoritis (kg)', y.bobotTeoritis||'', ''],
+          ['Bobot Aktual (kg)', y.bobotAktual||'', ''],
+          ['Selisih', y.selisih||'', ''],
+          ['Rekonsiliasi (%)', y.rekonsiliasi||'', y.keterangan||''],
+        ] },
+      K: { title:'Hasil Validasi Proses', headers:['Parameter','Kriteria','Hasil Aktual','Status','Pemeriksa'],
+        rows:[
+          ['CPP', hv.cpp.kriteria||'', hv.cpp.hasilAktual||'', hv.cpp.status||'', hv.cpp.pemeriksa||''],
+          ['CQA', hv.cqa.kriteria||'', hv.cqa.hasilAktual||'', hv.cqa.status||'', hv.cqa.pemeriksa||''],
+          ['Yield', hv.yieldRow.kriteria||'', hv.yieldRow.hasilAktual||'', hv.yieldRow.status||'', hv.yieldRow.pemeriksa||''],
+          ['Deviasi', hv.deviasi.kriteria||'', hv.deviasi.hasilAktual||'', hv.deviasi.status||'', hv.deviasi.pemeriksa||''],
+        ] },
+      evaluasiKesimpulan: p.evaluasiKesimpulan || '',
+      rekomendasi: p.rekomendasi || '',
+      kode: p.kode, keteranganValidasi: p.keteranganValidasi || ''
+    };
+  }
+
+  /* ---- Word (.docx) ---- */
+  function escapeXml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
+
+  function docxPara(text, opts){
+    opts = opts || {};
+    const bold = opts.bold ? '<w:b/>' : '';
+    const sz = `<w:sz w:val="${opts.size || 24}"/><w:szCs w:val="${opts.size || 24}"/>`;
+    const font = `<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>`;
+    const align = opts.align ? `<w:jc w:val="${opts.align}"/>` : '';
+    const spacing = `<w:spacing w:before="${opts.before||60}" w:after="${opts.after||60}"/>`;
+    return `<w:p><w:pPr>${spacing}${align}</w:pPr><w:r><w:rPr>${font}${bold}${sz}</w:rPr><w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r></w:p>`;
+  }
+
+  function docxCell(text, opts){
+    opts = opts || {};
+    const span = opts.colSpan && opts.colSpan > 1 ? `<w:gridSpan w:val="${opts.colSpan}"/>` : '';
+    return `<w:tc><w:tcPr><w:tcW w:w="${opts.width||1500}" w:type="dxa"/>${span}${opts.shade?`<w:shd w:val="clear" w:fill="E4EFEE"/>`:''}</w:tcPr>${docxPara(text,{bold:opts.bold, size:24, before:20, after:20})}</w:tc>`;
+  }
+
+  function docxInfoTable(pairs){
+    const labelWidth = 2600, valWidth = 6750;
+    const noBorders = `<w:tblBorders>
+      <w:top w:val="none"/><w:left w:val="none"/><w:bottom w:val="none"/><w:right w:val="none"/>
+      <w:insideH w:val="none"/><w:insideV w:val="none"/>
+    </w:tblBorders>`;
+    let xml = `<w:tbl><w:tblPr><w:tblW w:w="${labelWidth+valWidth}" w:type="dxa"/>${noBorders}</w:tblPr><w:tblGrid><w:gridCol w:w="${labelWidth}"/><w:gridCol w:w="${valWidth}"/></w:tblGrid>`;
+    pairs.forEach(([label, value])=>{
+      xml += `<w:tr>
+        <w:tc><w:tcPr><w:tcW w:w="${labelWidth}" w:type="dxa"/></w:tcPr>${docxPara(label, {size:24, before:20, after:20})}</w:tc>
+        <w:tc><w:tcPr><w:tcW w:w="${valWidth}" w:type="dxa"/></w:tcPr>${docxPara(': ' + (value||''), {size:24, before:20, after:20})}</w:tc>
+      </w:tr>`;
+    });
+    xml += `</w:tbl>`;
+    return xml;
+  }
+
+  function docxFlowBox(text){
+    const width = 6000;
+    const borders = `<w:tblBorders>
+      <w:top w:val="single" w:sz="8" w:color="0F5C5C"/><w:left w:val="single" w:sz="8" w:color="0F5C5C"/>
+      <w:bottom w:val="single" w:sz="8" w:color="0F5C5C"/><w:right w:val="single" w:sz="8" w:color="0F5C5C"/>
+    </w:tblBorders>`;
+    return `<w:tbl><w:tblPr><w:tblW w:w="${width}" w:type="dxa"/><w:jc w:val="center"/>${borders}</w:tblPr><w:tblGrid><w:gridCol w:w="${width}"/></w:tblGrid>
+      <w:tr><w:tc><w:tcPr><w:tcW w:w="${width}" w:type="dxa"/><w:shd w:val="clear" w:fill="E4EFEE"/><w:vAlign w:val="center"/></w:tcPr>
+        ${docxPara(text, {align:'center', size:24, before:80, after:80})}
+      </w:tc></w:tr>
+    </w:tbl>`;
+  }
+
+  function docxFlowArrow(){
+    return docxPara('↓', {align:'center', size:28, before:20, after:20});
+  }
+
+  function docxTable(headers, rows, boldRowIndexes){
+    boldRowIndexes = boldRowIndexes || [];
+    const totalWidth = 9350;
+    const colW = Math.floor(totalWidth/headers.length);
+    const borders = `<w:tblBorders>
+      <w:top w:val="single" w:sz="4" w:color="000000"/><w:left w:val="single" w:sz="4" w:color="000000"/>
+      <w:bottom w:val="single" w:sz="4" w:color="000000"/><w:right w:val="single" w:sz="4" w:color="000000"/>
+      <w:insideH w:val="single" w:sz="4" w:color="000000"/><w:insideV w:val="single" w:sz="4" w:color="000000"/>
+    </w:tblBorders>`;
+    let xml = `<w:tbl><w:tblPr><w:tblW w:w="${totalWidth}" w:type="dxa"/>${borders}</w:tblPr><w:tblGrid>${headers.map(()=>`<w:gridCol w:w="${colW}"/>`).join('')}</w:tblGrid>`;
+    xml += `<w:tr>${headers.map(h=>docxCell(h,{bold:true, width:colW, shade:true})).join('')}</w:tr>`;
+    if(rows.length===0){
+      xml += `<w:tr>${headers.map((h,i)=>docxCell(i===0?'Belum ada data':'', {width:colW})).join('')}</w:tr>`;
+    } else {
+      rows.forEach((row,ri)=>{
+        const isBold = boldRowIndexes.includes(ri);
+        if(row.length < headers.length){
+          const span = headers.length - row.length + 1;
+          const cells = [docxCell(row[0], {width:colW*span, bold:isBold, colSpan:span})]
+            .concat(row.slice(1).map(c=>docxCell(c, {width:colW, bold:isBold})));
+          xml += `<w:tr>${cells.join('')}</w:tr>`;
+        } else {
+          xml += `<w:tr>${row.map((c,i)=>docxCell(c, {width:colW, bold:isBold})).join('')}</w:tr>`;
+        }
+      });
+    }
+    xml += `</w:tbl>`;
+    return xml;
+  }
+
+  const LOGO_BASE64 = "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";
+  const LOGO_WIDTH_EMU = 1714500;
+  const LOGO_HEIGHT_EMU = 457200;
+
+  function buildDocxLogoXml(){
+    return `<w:p><w:pPr><w:jc w:val="left"/></w:pPr><w:r><w:drawing>
+      <wp:inline distT="0" distB="0" distL="0" distR="0" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">
+        <wp:extent cx="${LOGO_WIDTH_EMU}" cy="${LOGO_HEIGHT_EMU}"/>
+        <wp:effectExtent l="0" t="0" r="0" b="0"/>
+        <wp:docPr id="1" name="Logo"/>
+        <wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>
+        <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+            <pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+              <pic:nvPicPr><pic:cNvPr id="0" name="Logo"/><pic:cNvPicPr/></pic:nvPicPr>
+              <pic:blipFill>
+                <a:blip r:embed="rIdLogo" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>
+                <a:stretch><a:fillRect/></a:stretch>
+              </pic:blipFill>
+              <pic:spPr>
+                <a:xfrm><a:off x="0" y="0"/><a:ext cx="${LOGO_WIDTH_EMU}" cy="${LOGO_HEIGHT_EMU}"/></a:xfrm>
+                <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+              </pic:spPr>
+            </pic:pic>
+          </a:graphicData>
+        </a:graphic>
+      </wp:inline>
+    </w:drawing></w:r></w:p>`;
+  }
+
+  function buildDocxBodyXml(sections){
+    let body = '';
+    body += buildDocxLogoXml();
+    body += docxPara('LAPORAN VALIDASI PROSES', {bold:true, size:28, align:'center', before:60, after:200});
+    body += docxInfoTable([
+      ['Nama Produk', sections.header.namaProduk],
+      ['Bentuk Sediaan', sections.header.bentukSediaan],
+      ['Batch Size', sections.header.batchSize],
+      ['Lokasi', sections.header.lokasi],
+    ]);
+    body += docxPara('', {before:0, after:120});
+
+    ['A','B','C','D'].forEach(k=>{
+      const s = sections[k];
+      body += docxPara(k + '. ' + s.title, {bold:true, size:24, before:200});
+      let rowsToShow = s.rows;
+      if(k === 'A' && s.totals){
+        rowsToShow = s.rows.concat([['TOTAL', formatNum(s.totals.totalPercent), formatNum(s.totals.totalGram)]]);
+      }
+      body += docxTable(s.headers, rowsToShow, k==='A' ? [s.rows.length] : []);
+    });
+
+    const eSec = sections.E;
+    body += docxPara('E. ' + eSec.title, {bold:true, size:24, before:200});
+    body += docxTable(eSec.headers, eSec.rows);
+
+    body += docxPara('F. ' + sections.F.title, {bold:true, size:24, before:200});
+    if(sections.F.steps.length===0){
+      body += docxPara('Belum ada tahapan diisi.', {size:24});
+    } else {
+      sections.F.steps.forEach((step,i)=>{
+        body += docxFlowBox(step);
+        if(i < sections.F.steps.length-1) body += docxFlowArrow();
+      });
+    }
+    body += docxPara('', {before:0, after:100});
+
+    ['G'].forEach(k=>{
+      const s = sections[k];
+      body += docxPara(k + '. ' + s.title, {bold:true, size:24, before:200});
+      body += docxTable(s.headers, s.rows);
+    });
+
+    const hSec = sections.H;
+    body += docxPara('H. ' + hSec.title, {bold:true, size:24, before:200});
+    body += docxInfoTable([
+      ['Nama Produk', sections.header.namaProduk],
+      ['Tanggal Sampling', hSec.tanggalSampling||''],
+    ]);
+    body += docxTable(hSec.headers, hSec.rows);
+
+    ['I','J','K'].forEach(k=>{
+      const s = sections[k];
+      body += docxPara(k + '. ' + s.title, {bold:true, size:24, before:200});
+      body += docxTable(s.headers, s.rows);
+    });
+
+    body += docxPara('Evaluasi dan Kesimpulan:', {bold:true, size:24, before:200});
+    ['Validasi Diterima','Validasi Ditolak','Revalidasi'].forEach(opt=>{
+      body += docxPara((sections.evaluasiKesimpulan===opt?'☑ ':'☐ ') + opt, {size:24});
+    });
+    body += docxPara('Rekomendasi:', {bold:true, size:24, before:200});
+    body += docxPara(sections.rekomendasi || '-', {size:24});
+
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body>
+</w:document>`;
+  }
+
+  const DOCX_CONTENT_TYPES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Default Extension="png" ContentType="image/png"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>`;
+
+  const DOCX_RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`;
+
+  const DOCX_DOCUMENT_RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+<Relationship Id="rIdLogo" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.png"/>
+</Relationships>`;
+
+  const DOCX_STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:rPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>
+</w:styles>`;
+
+  const DOCX_CORE = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<dc:title>Laporan Validasi Proses</dc:title><dc:creator>Validasi Proses Mixing</dc:creator>
+</cp:coreProperties>`;
+
+  const DOCX_APP = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
+<Application>Validasi Proses Mixing</Application>
+</Properties>`;
+
+  async function downloadDocx(p){
+    if(typeof JSZip === 'undefined'){ showToast('Gagal memuat pustaka Word (JSZip). Periksa koneksi internet.'); return; }
+    const sections = buildReportSections(p);
+    const documentXml = buildDocxBodyXml(sections);
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', DOCX_CONTENT_TYPES);
+    zip.folder('_rels').file('.rels', DOCX_RELS);
+    zip.folder('docProps').file('core.xml', DOCX_CORE);
+    zip.file('docProps/app.xml', DOCX_APP);
+    const wordFolder = zip.folder('word');
+    wordFolder.file('document.xml', documentXml);
+    wordFolder.file('styles.xml', DOCX_STYLES);
+    wordFolder.folder('_rels').file('document.xml.rels', DOCX_DOCUMENT_RELS);
+    wordFolder.folder('media').file('logo.png', LOGO_BASE64, {base64:true});
+    const blob = await zip.generateAsync({type:'blob'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Laporan Validasi Proses - ' + (p.kode||'produk') + '.docx';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /* ---- PDF (cetak browser) ---- */
+  function htmlInfoTable(pairs){
+    const rows = pairs.map(([label,value])=>`<tr><td style="border:none;padding:2px 10px 2px 0;width:170px;vertical-align:top">${escapeHtml(label)}</td><td style="border:none;padding:2px 0;vertical-align:top">: ${escapeHtml(value||'')}</td></tr>`).join('');
+    return `<table style="border-collapse:collapse;margin-bottom:8px">${rows}</table>`;
+  }
+
+  function htmlTable(headers, rows, boldRowIndexes){
+    boldRowIndexes = boldRowIndexes || [];
+    const th = headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('');
+    const trs = rows.length ? rows.map((r,ri)=>{
+      const style = boldRowIndexes.includes(ri) ? ' style="font-weight:bold"' : '';
+      if(r.length < headers.length){
+        const span = headers.length - r.length + 1;
+        const cells = [`<td colspan="${span}">${escapeHtml(r[0])}</td>`].concat(r.slice(1).map(c=>`<td>${escapeHtml(c)}</td>`));
+        return `<tr${style}>${cells.join('')}</tr>`;
+      }
+      return `<tr${style}>${r.map(c=>`<td>${escapeHtml(c)}</td>`).join('')}</tr>`;
+    }).join('') : `<tr><td colspan="${headers.length}" style="color:#888">Belum ada data</td></tr>`;
+    return `<table style="width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:11px"><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`;
+  }
+
+  function buildPrintHtml(p){
+    const s = buildReportSections(p);
+    let body = `
+      <img src="data:image/png;base64,${LOGO_BASE64}" style="height:40px;display:block;margin-bottom:8px" alt="Logo">
+      <h1 style="text-align:center;font-size:18px">LAPORAN VALIDASI PROSES</h1>
+      ${htmlInfoTable([
+        ['Nama Produk', s.header.namaProduk],
+        ['Bentuk Sediaan', s.header.bentukSediaan],
+        ['Batch Size', s.header.batchSize],
+        ['Lokasi', s.header.lokasi],
+      ])}
+    `;
+    ['A','B','C','D'].forEach(k=>{
+      let rowsToShow = s[k].rows;
+      let boldRows = [];
+      if(k === 'A' && s[k].totals){
+        rowsToShow = s[k].rows.concat([['TOTAL', formatNum(s[k].totals.totalPercent), formatNum(s[k].totals.totalGram)]]);
+        boldRows = [s[k].rows.length];
+      }
+      body += `<h3>${k}. ${escapeHtml(s[k].title)}</h3>` + htmlTable(s[k].headers, rowsToShow, boldRows);
+    });
+    body += `<h3>E. ${escapeHtml(s.E.title)}</h3>` + htmlTable(s.E.headers, s.E.rows);
+    body += `<h3>F. ${escapeHtml(s.F.title)}</h3>`;
+    if(s.F.steps.length===0){ body += `<p style="color:#888">Belum ada tahapan diisi.</p>`; }
+    else { body += s.F.steps.map((step,i)=>`<div style="border:2px solid #0F5C5C;background:#E4EFEE;border-radius:6px;padding:8px 14px;max-width:400px;margin:0 auto;text-align:center;font-weight:bold">${escapeHtml(step)}</div>${i<s.F.steps.length-1?'<div style="text-align:center;font-size:18px;line-height:1.2">↓</div>':''}`).join(''); }
+    body += `<h3>G. ${escapeHtml(s.G.title)}</h3>` + htmlTable(s.G.headers, s.G.rows);
+    body += `<h3>H. ${escapeHtml(s.H.title)}</h3>` + htmlInfoTable([['Nama Produk', s.header.namaProduk],['Tanggal Sampling', s.H.tanggalSampling||'']]) + htmlTable(s.H.headers, s.H.rows);
+    body += `<h3>I. ${escapeHtml(s.I.title)}</h3>` + htmlTable(s.I.headers, s.I.rows);
+    body += `<h3>J. ${escapeHtml(s.J.title)}</h3>` + htmlTable(s.J.headers, s.J.rows);
+    body += `<h3>K. ${escapeHtml(s.K.title)}</h3>` + htmlTable(s.K.headers, s.K.rows);
+    body += `<h3>Evaluasi dan Kesimpulan:</h3>`;
+    ['Validasi Diterima','Validasi Ditolak','Revalidasi'].forEach(opt=>{
+      body += `<p>${s.evaluasiKesimpulan===opt?'☑':'☐'} ${opt}</p>`;
+    });
+    body += `<h3>Rekomendasi:</h3><p>${escapeHtml(s.rekomendasi||'-')}</p>`;
+
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Validasi Proses - ${escapeHtml(p.kode||'')}</title>
+    <style>
+      body{font-family:'Times New Roman',Times,serif;font-size:12pt;color:#111;padding:24px;}
+      h1{margin:14px 0 6px;font-size:14pt;}
+      h3{margin:14px 0 6px;font-size:12pt;}
+      table{border:1px solid #333;font-size:12pt;}
+      th,td{border:1px solid #333;padding:4px 6px;text-align:left;vertical-align:top;}
+      th{background:#eee;}
+      p{font-size:12pt;}
+      @media print{ body{padding:0;} }
+    </style></head><body>${body}
+    <script>window.onload=function(){ setTimeout(function(){ window.print(); }, 300); };<\/script>
+    </body></html>`;
+  }
+
+  function printAsPdf(p){
+    const html = buildPrintHtml(p);
+    const win = window.open('', '_blank');
+    if(!win){ showToast('Popup diblokir browser. Izinkan popup untuk situs ini lalu coba lagi.'); return; }
+    win.document.open(); win.document.write(html); win.document.close();
+  }
+
+  /* ---------------- RENDER ---------------- */
+  function render(){
+    const app = document.getElementById('app');
+    if(!state.siteLoggedIn){ app.innerHTML = renderSiteLogin(); attachSiteLoginEvents(); return; }
+    app.innerHTML = `
+      ${topbar()}
+      <main>${state.loading ? '<div class="loading-row">Memuat data…</div>' : renderTabContent()}</main>
+      <div class="footer-note">Validasi Proses Mixing — data tersimpan otomatis &amp; dibagikan ke seluruh tim.</div>
+      ${state.drawerOpen ? renderDrawer() : ''}
+      ${state.settingsOpen ? renderSettingsModal() : ''}
+      ${state.categoryModalOpen ? renderCategoryModal() : ''}
+      ${state.toast ? `<div class="toast">${escapeHtml(state.toast)}</div>` : ''}
+    `;
+    attachEvents();
+  }
+
+  function renderTabContent(){
+    if(state.tab === 'master') return renderMaster();
+    if(state.tab === 'lockqa') return renderLockQA();
+    if(state.tab === 'kalibrasi') return renderPeralatanSarana();
+    return renderDetail();
+  }
+
+  function renderSiteLogin(){
+    return `
+    <div class="login-wrap" style="margin-top:110px">
+      <div class="stamp" style="border-color:var(--primary);color:var(--primary)">VPM<br>ACCESS</div>
+      <h2>Masuk — Validasi Proses Mixing</h2>
+      <p>Website internal tim. Masukkan password akses untuk melanjutkan.</p>
+      <input type="password" id="siteLoginInput" placeholder="Password akses">
+      ${state.siteLoginError ? `<div class="login-error">${escapeHtml(state.siteLoginError)}</div>` : ''}
+      <button class="btn btn-primary" style="width:100%;justify-content:center" data-action="site-login">Masuk</button>
+    </div>`;
+  }
+
+  function attachSiteLoginEvents(){
+    const app = document.getElementById('app');
+    const btn = app.querySelector('[data-action="site-login"]');
+    const input = app.querySelector('#siteLoginInput');
+    const submit = async () => {
+      const val = input.value;
+      if(btn) btn.disabled = true;
+      const result = await checkPassword('site', val);
+      if(btn) btn.disabled = false;
+      if(result === true){ state.siteLoggedIn = true; state.siteLoginError=''; loadAll(); }
+      else if(result === false){ state.siteLoginError = 'Password salah. Coba lagi.'; render(); }
+      else { state.siteLoggedIn = true; state.siteLoginError=''; loadAll(); showToast('Belum terhubung ke Google Sheets — password belum aktif. Hubungkan URL Apps Script di ⚙ Pengaturan.'); }
+    };
+    if(btn) btn.onclick = submit;
+    if(input) input.onkeydown = (e) => { if(e.key==='Enter') submit(); };
+  }
+
+  function topbar(){
+    return `
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">VPM</div>
+        <div class="brand-text"><h1>Validasi Proses Mixing</h1><p>Master data produk &amp; persetujuan Lock QA</p></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="tabs">
+          <button class="tab-btn ${state.tab==='master'?'active':''}" data-action="goto-tab" data-tab="master">Data Master</button>
+          <button class="tab-btn ${state.tab==='detail'?'active':''}" data-action="goto-tab" data-tab="detail">Detail Produk</button>
+          <button class="tab-btn ${state.tab==='lockqa'?'active':''}" data-action="goto-tab" data-tab="lockqa">Lock QA</button>
+          <button class="tab-btn ${state.tab==='kalibrasi'?'active':''}" data-action="goto-tab" data-tab="kalibrasi">Peralatan &amp; Sarana Penunjang</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.25)" data-action="open-settings" title="Pengaturan sinkronisasi Google Sheets">⚙</button>
+      </div>
+    </div>
+    ${state.scriptUrl ? '' : `<div style="background:var(--warn-bg);color:var(--warn);padding:10px 28px;font-size:13px;border-bottom:1px solid #F0DFA9">Belum tersambung ke Google Sheets. Klik <strong>⚙</strong> untuk memasukkan URL Apps Script.</div>`}
+    ${state.syncError ? `<div style="background:var(--danger-bg);color:var(--danger);padding:10px 28px;font-size:13px;border-bottom:1px solid #F3CFCB">${escapeHtml(state.syncError)}</div>` : ''}
+    `;
+  }
+
+  /* ---------- MASTER TAB ---------- */
+  function filteredProducts(){
+    return state.products.filter(p => (!!p.deleted === state.showArchived) && matchesSearch(p, state.searchQuery));
+  }
+
+  function masterRowHtml(p){
+    const st = lockStatusFor(p.id);
+    if(state.showArchived){
+      return `
+      <tr>
+        <td><span class="code-badge">${escapeHtml(p.kode||'-')}</span></td>
+        <td>${escapeHtml(formatDateID(p.tanggalIsi)||'-')}</td>
+        <td>${escapeHtml(p.merk||'-')}</td>
+        <td><strong>${escapeHtml(fullName(p)||'-')}</strong></td>
+        <td><span class="badge-status st-reject">Dihapus</span></td>
+        <td><div class="actions-cell">
+          <button class="icon-btn" data-action="restore-product" data-id="${p.id}" title="Pulihkan">↩</button>
+          <button class="icon-btn danger" data-action="purge-product" data-id="${p.id}" title="Hapus Permanen">🗑</button>
+        </div></td>
+      </tr>`;
+    }
+    return `
+    <tr>
+      <td><span class="code-badge">${escapeHtml(p.kode||'-')}</span></td>
+      <td>${escapeHtml(formatDateID(p.tanggalIsi)||'-')}</td>
+      <td>${escapeHtml(p.merk||'-')}</td>
+      <td><strong>${escapeHtml(fullName(p)||'-')}</strong></td>
+      <td>${escapeHtml(p.batchSize||'-')}</td>
+      <td>${escapeHtml(p.lokasiProduksi||'-')}</td>
+      <td class="mono">${escapeHtml(p.dpi||'-')}</td>
+      <td class="mono">${escapeHtml(p.ppi||'-')}</td>
+      <td><span class="badge-status ${st.cls}">${escapeHtml(st.label)}</span></td>
+      <td><div class="actions-cell">
+        <button class="icon-btn" data-action="edit-product" data-id="${p.id}" title="Edit">✎</button>
+        <button class="icon-btn" data-action="duplicate-product" data-id="${p.id}" title="Duplikat">📋</button>
+        <button class="icon-btn danger" data-action="delete-product" data-id="${p.id}" title="Hapus">🗑</button>
+      </div></td>
+    </tr>`;
+  }
+
+  function buildMasterTableHtml(list){
+    if(state.showArchived){
+      if(list.length === 0){
+        return `<div class="empty-state"><div class="icon">🗄</div><h3>Arsip kosong</h3><p>Belum ada produk yang dihapus.</p></div>`;
+      }
+      const rows = list.map(masterRowHtml).join('');
+      return `<table><thead><tr>
+        <th>Kode</th><th>Tgl Isi</th><th>Merk</th><th>Nama Produk Lengkap</th><th>Status</th><th>Aksi</th>
+      </tr></thead><tbody>${rows}</tbody></table>`;
+    }
+    if(state.products.filter(p=>!p.deleted).length === 0){
+      return `<div class="empty-state"><div class="icon">🧪</div><h3>Belum ada data produk</h3><p>Klik "Tambah Produk" untuk mulai mengisi validasi proses mixing.</p></div>`;
+    }
+    if(list.length === 0){
+      return `<div class="empty-state"><div class="icon">🔍</div><h3>Tidak ada hasil</h3><p>Coba kata kunci pencarian lain.</p></div>`;
+    }
+    const rows = list.map(masterRowHtml).join('');
+    return `<table><thead><tr>
+      <th>Kode</th><th>Tgl Isi</th><th>Merk</th><th>Nama Produk Lengkap</th>
+      <th>Batch Size</th><th>Lokasi</th><th>DPI</th><th>PPI</th><th>Status Lock QA</th><th>Aksi</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  function renderMaster(){
+    const list = filteredProducts();
+    const archivedCount = state.products.filter(p=>p.deleted).length;
+    return `
+      <div class="page-head">
+        <div><h2>${state.showArchived ? 'Arsip — Produk Dihapus' : 'Data Master — Produk & Validasi'}</h2><p>${state.showArchived ? 'Produk di sini sudah dihapus dari Data Master, tapi datanya tetap tersimpan. Bisa dipulihkan atau dihapus permanen.' : 'Semua diisi &amp; diedit di sini. Setiap kali disimpan, otomatis tersalin ke Google Sheets.'}</p></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost ${state.showArchived?'active':''}" data-action="toggle-archive" style="${state.showArchived?'background:var(--primary);color:#fff':''}">${state.showArchived ? '← Kembali ke Data Master' : `🗄 Arsip (${archivedCount})`}</button>
+          ${state.showArchived ? '' : `<button class="btn btn-ghost" data-action="open-category-modal">🗂 Kelola Kategori</button>`}
+          <button class="btn btn-ghost" data-action="refresh-sheet" ${state.syncing?'disabled':''}>${state.syncing?'Menyinkronkan…':'⟳ Tarik data terbaru'}</button>
+          ${state.showArchived ? '' : `<button class="btn btn-primary" data-action="new-product">+ Tambah Produk</button>`}
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="search-box"><span class="icon">🔍</span><input type="text" id="searchInput" placeholder="Cari nama produk, batch size, lokasi, mesin, dll…" value="${escAttr(state.searchQuery)}"></div>
+        ${state.searchQuery ? `<span style="font-size:12.5px;color:var(--text-muted)">${list.length} dari ${state.products.filter(p=>!!p.deleted===state.showArchived).length} produk cocok</span>` : ''}
+      </div>
+      <div class="card"><div class="table-wrap" id="masterTableWrap">${buildMasterTableHtml(list)}</div></div>
+    `;
+  }
+
+  function refreshMasterTableWrap(){
+    const wrap = document.getElementById('masterTableWrap');
+    if(!wrap) return;
+    const list = filteredProducts();
+    wrap.innerHTML = buildMasterTableHtml(list);
+    attachMasterTableEvents();
+    const toolbar = document.querySelector('.toolbar');
+    if(toolbar){
+      let span = toolbar.querySelector('span');
+      if(state.searchQuery){
+        const text = `${list.length} dari ${state.products.filter(p=>!!p.deleted===state.showArchived).length} produk cocok`;
+        if(span){ span.textContent = text; } else {
+          const s = document.createElement('span'); s.style.fontSize='12.5px'; s.style.color='var(--text-muted)'; s.textContent = text;
+          toolbar.appendChild(s);
+        }
+      } else if(span){ span.remove(); }
+    }
+  }
+
+  function attachMasterTableEvents(){
+    const wrap = document.getElementById('masterTableWrap');
+    if(!wrap) return;
+    wrap.querySelectorAll('[data-action="edit-product"]').forEach(el=>{
+      el.onclick = () => {
+        const orig = state.products.find(x=>x.id===el.dataset.id);
+        state.editingProduct = JSON.parse(JSON.stringify(orig));
+        ensureExtraSections(state.editingProduct);
+        state.drawerOpen = true; render();
+      };
+    });
+    wrap.querySelectorAll('[data-action="duplicate-product"]').forEach(el=>{
+      el.onclick = () => {
+        const orig = state.products.find(x=>x.id===el.dataset.id);
+        if(!orig) return;
+        const copy = JSON.parse(JSON.stringify(orig));
+        copy.id = uid();
+        copy.deleted = false;
+        copy._kodeAuto = true;
+        copy.kode = computeAutoKode(copy.namaProduk, null);
+        copy.tanggalIsi = todayISO();
+        state.editingProduct = copy;
+        ensureExtraSections(state.editingProduct);
+        state.drawerOpen = true;
+        showToast('Data disalin — cek dulu sebelum klik Simpan Produk.');
+        render();
+      };
+    });
+    wrap.querySelectorAll('[data-action="delete-product"]').forEach(el=>{
+      el.onclick = async () => {
+        if(!confirm('Hapus produk ini? Data tetap tersimpan di Arsip, bukan dihapus permanen.')) return;
+        const prod = state.products.find(x=>x.id===el.dataset.id);
+        if(prod) prod.deleted = true;
+        await saveProducts(); showToast('Produk dipindah ke Arsip.'); render();
+      };
+    });
+    wrap.querySelectorAll('[data-action="restore-product"]').forEach(el=>{
+      el.onclick = async () => {
+        const prod = state.products.find(x=>x.id===el.dataset.id);
+        if(prod) prod.deleted = false;
+        await saveProducts(); showToast('Produk dipulihkan ke Data Master.'); render();
+      };
+    });
+    wrap.querySelectorAll('[data-action="purge-product"]').forEach(el=>{
+      el.onclick = async () => {
+        if(!confirm('Hapus PERMANEN produk ini? Tindakan ini tidak bisa dibatalkan.')) return;
+        state.products = state.products.filter(x=>x.id!==el.dataset.id);
+        await saveProducts(); showToast('Produk dihapus permanen.'); render();
+      };
+    });
+  }
+
+  /* ---------- PRODUCT DRAWER ---------- */
+  function renderDrawer(){
+    const p = state.editingProduct;
+    const jadwalLen = p.jadwal.length;
+    const jadwalRows = p.jadwal.map((j,i)=>`
+      <tr>
+        <td style="width:28%">
+          <select data-jadwal="tahapan" data-idx="${i}">${optionsHtml(tahapanOptions(), j.tahapan, '+ Tambah baru (Lainnya)…')}</select>
+        </td>
+        <td style="width:22%"><input type="date" data-jadwal="tanggal" data-idx="${i}" value="${j.tanggal}"></td>
+        <td style="width:26%"><input type="text" data-jadwal="nomorBatch" data-idx="${i}" value="${escAttr(j.nomorBatch)}" placeholder="No. Batch"></td>
+        <td style="width:112px"><div class="actions-cell">${moveRowButtonsHtml('move-jadwal', '', i, jadwalLen)}<button class="row-remove" data-action="remove-jadwal" data-idx="${i}" title="Hapus baris">✕</button></div></td>
+      </tr>
+    `).join('');
+
+    return `
+    <div class="overlay" data-action="overlay-close">
+      <div class="drawer" data-stop="1">
+        <div class="drawer-head">
+          <h3>${p._isNew ? 'Tambah Produk' : 'Edit Produk'}</h3>
+          <button class="drawer-close" data-action="close-drawer">✕</button>
+        </div>
+        <div class="drawer-body">
+
+          <div class="section-title"><span class="n">1</span> Informasi Umum</div>
+          <div class="grid">
+            <div class="field"><label>Tanggal Isi</label><input type="date" data-field="tanggalIsi" value="${p.tanggalIsi}"><div class="hint">Otomatis terisi tanggal hari ini, bisa diubah kalau perlu.</div></div>
+            <div class="field">
+              <label>Kode ${p._kodeAuto ? '<span style="color:var(--accent);font-weight:600">(otomatis)</span>' : ''}</label>
+              <input type="text" class="mono" data-field="kode" value="${escAttr(p.kode)}" placeholder="Otomatis setelah isi Nama Produk">
+              <div class="hint">Dibuat otomatis dari Nama Produk. ${!p._kodeAuto ? ' <a href="#" data-action="reset-kode-auto" style="color:var(--primary)">Buat ulang otomatis</a>' : ''}</div>
+            </div>
+            <div class="field"><label>Merk</label><select data-field-select="merk">${optionsHtml(state.categories.merk, p.merk)}</select></div>
+            <div class="field"><label>Nama Produk</label><select data-field-select="namaProduk">${optionsHtml(state.categories.namaProduk, p.namaProduk)}</select></div>
+            <div class="field full">
+              <label>Nama Produk Lengkap (otomatis: Merk + Nama Produk)</label>
+              <div class="computed-box">${escapeHtml(fullName(p)) || '—'}</div>
+              <input style="margin-top:8px" type="text" data-field="namaProdukLengkapOverride" value="${escAttr(p.namaProdukLengkapOverride)}" placeholder="Override manual (opsional)">
+            </div>
+            <div class="field"><label>Bentuk Sediaan</label><select data-field-select="bentukSediaan">${optionsHtml(state.categories.bentukSediaan, p.bentukSediaan)}</select></div>
+            <div class="field"><label>Batch Size (kg)</label><select data-field-select="batchSize">${optionsHtml(state.categories.batchSize, p.batchSize)}</select></div>
+            <div class="field"><label>Lokasi Produksi</label><select data-field-select="lokasiProduksi">${optionsHtml(state.categories.lokasiProduksi, p.lokasiProduksi)}</select></div>
+          </div>
+
+          <div class="section-title"><span class="n">2</span> Kategori Tahapan</div>
+          <table class="mini-table"><thead><tr><th>Tahapan</th><th>Tanggal</th><th>Nomor Batch</th><th></th></tr></thead><tbody>${jadwalRows}</tbody></table>
+          <p class="hint">Pilih tahapan dari dropdown (Validasi Proses 1, 2, dst), atau pilih "+ Tambah baru (Lainnya)…" untuk menambah tahapan kustom.</p>
+          <div class="field full" style="margin-top:14px"><label>Keterangan Validasi</label><textarea data-field="keteranganValidasi">${escapeHtml(p.keteranganValidasi)}</textarea></div>
+
+          <div class="section-title"><span class="n">3</span> Dokumen Acuan</div>
+          <div class="grid">
+            <div class="field"><label>DPI (no. dokumen)</label>${externalDocDatalistInput('dpi', state.externalLists.dpi, p.dpi, 'dl_dpi')}</div>
+            <div class="field"><label>PPI (no. dokumen)</label>${externalDocDatalistInput('ppi', state.externalLists.ppi, p.ppi, 'dl_ppi')}</div>
+            <div class="field"><label>CPB — Catatan Pengolahan Batch (no. dokumen)</label>${externalDocDatalistInput('cpb', state.externalLists.cpb, p.cpb, 'dl_cpb')}</div>
+            <div class="field"><label>Spesifikasi Produk Ruahan (no. dokumen)</label>${externalDocDatalistInput('spesifikasiRuahan', state.externalLists.produkRuahan, p.spesifikasiRuahan, 'dl_spesRuahan')}</div>
+            <div class="field"><label>Spesifikasi Produk Jadi (no. dokumen)</label>${externalDocDatalistInput('spesifikasiProdukJadi', state.externalLists.produkJadi, p.spesifikasiProdukJadi, 'dl_spesProdukJadi')}</div>
+          </div>
+
+          ${renderDynTableSection(p, DYNAMIC_TABLES[0], 4)}
+          ${renderDynTableSection(p, DYNAMIC_TABLES[1], 5)}
+          ${(() => {
+            const prev = findPreviousProductWithData(p.namaProduk, p.id, 'peralatanDetail');
+            return prev ? `<div style="background:var(--accent-tint);border:1px solid #EBCFA0;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+              <span style="font-size:13px;color:var(--text)">Ditemukan data <strong>Peralatan</strong> dari produk yang sama (Kode: <strong>${escapeHtml(prev.kode)}</strong>).</span>
+              <button type="button" class="btn btn-ghost btn-sm" data-action="copy-from-previous" data-table="peralatanDetail" data-source-id="${prev.id}">📋 Salin Data Ini</button>
+            </div>` : '';
+          })()}
+          ${renderDynTableSection(p, DYNAMIC_TABLES[2], 6)}
+          ${(() => {
+            const prev = findPreviousProductWithData(p.namaProduk, p.id, 'saranaPenunjang');
+            return prev ? `<div style="background:var(--accent-tint);border:1px solid #EBCFA0;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+              <span style="font-size:13px;color:var(--text)">Ditemukan data <strong>Sarana Penunjang</strong> dari produk yang sama (Kode: <strong>${escapeHtml(prev.kode)}</strong>).</span>
+              <button type="button" class="btn btn-ghost btn-sm" data-action="copy-from-previous" data-table="saranaPenunjang" data-source-id="${prev.id}">📋 Salin Data Ini</button>
+            </div>` : '';
+          })()}
+          ${renderDynTableSection(p, DYNAMIC_TABLES[3], 7)}
+
+          <div class="section-title"><span class="n">8</span> Kondisi Ruangan</div>
+          ${renderFixedFieldsGroup('Penimbangan', 'kondisiRuangan.penimbangan', p, [
+            {field:'suhu', label:'Suhu Ruangan (°C)'}, {field:'rh', label:'Kelembaban/RH (%)'},
+            {field:'kebersihanArea', label:'Kebersihan Area', type:'select', cat:'kebersihan'}, {field:'kebersihanMesin', label:'Kebersihan Mesin', type:'select', cat:'kebersihan'},
+            {field:'diperiksaOleh', label:'Diperiksa Oleh'}
+          ])}
+          ${renderFixedFieldsGroup('Pengolahan', 'kondisiRuangan.pengolahan', p, [
+            {field:'suhu', label:'Suhu Ruangan (°C)'}, {field:'rh', label:'Kelembaban/RH (%)'},
+            {field:'kebersihanArea', label:'Kebersihan Area', type:'select', cat:'kebersihan'}, {field:'kebersihanMesin', label:'Kebersihan Mesin', type:'select', cat:'kebersihan'},
+            {field:'diperiksaOleh', label:'Diperiksa Oleh'}
+          ])}
+
+          ${renderFlowchartStepsSection(p, 9)}
+
+          ${renderDynTableSection(p, DYNAMIC_TABLES[4], 10)}
+
+          <div class="section-title"><span class="n">11</span> Pengujian Sampling</div>
+          <div class="field" style="max-width:280px;margin-bottom:6px"><label>Tanggal Sampling</label><input type="date" data-field="tanggalSampling" value="${p.tanggalSampling}"></div>
+          ${renderDynTableSection(p, DYNAMIC_TABLES[5], '11b')}
+
+          ${renderDynTableSection(p, DYNAMIC_TABLES[6], 12)}
+
+          <div class="section-title"><span class="n">13</span> Perhitungan Yield</div>
+          <div class="grid3">
+            <div class="field"><label>Bobot Teoritis (kg)</label><input type="text" data-nested="yieldData.bobotTeoritis" value="${escAttr(p.yieldData.bobotTeoritis)}"></div>
+            <div class="field"><label>Bobot Aktual (kg)</label><input type="text" data-nested="yieldData.bobotAktual" value="${escAttr(p.yieldData.bobotAktual)}"></div>
+            <div class="field"><label>Selisih</label><input type="text" data-nested="yieldData.selisih" value="${escAttr(p.yieldData.selisih)}"></div>
+          </div>
+          <div class="grid" style="margin-top:10px">
+            <div class="field"><label>Rekonsiliasi (%)</label><input type="text" data-nested="yieldData.rekonsiliasi" value="${escAttr(p.yieldData.rekonsiliasi)}"><div class="hint">Otomatis dihitung dari Bobot Aktual ÷ Bobot Teoritis × 100, bisa diedit kalau perlu.</div></div>
+            <div class="field"><label>Keterangan</label><input type="text" data-nested="yieldData.keterangan" value="${escAttr(p.yieldData.keterangan)}" placeholder="mis. Memenuhi syarat apabila 98–100%"></div>
+          </div>
+
+          <div class="section-title"><span class="n">14</span> Hasil Validasi Proses</div>
+          <div class="table-wrap"><table class="mini-table">
+            <thead><tr><th>Parameter</th><th>Kriteria</th><th>Hasil Aktual</th><th>Status</th><th>Pemeriksa</th></tr></thead>
+            <tbody>
+              ${['cpp','cqa','yieldRow','deviasi'].map(rowKey=>{
+                const rowLabel = {cpp:'CPP', cqa:'CQA', yieldRow:'Yield', deviasi:'Deviasi'}[rowKey];
+                const row = p.hasilValidasi[rowKey];
+                return `<tr>
+                  <td style="font-weight:600;font-size:13px;padding:9px 4px">${rowLabel}</td>
+                  <td><select data-nested="hasilValidasi.${rowKey}.kriteria" data-cat="hasilValidasiKriteria">${optionsHtml(state.categories.hasilValidasiKriteria, row.kriteria)}</select></td>
+                  <td><input type="text" data-nested="hasilValidasi.${rowKey}.hasilAktual" value="${escAttr(row.hasilAktual)}"></td>
+                  <td><input type="text" data-nested="hasilValidasi.${rowKey}.status" value="${escAttr(row.status)}"></td>
+                  <td><input type="text" data-nested="hasilValidasi.${rowKey}.pemeriksa" value="${escAttr(row.pemeriksa)}"></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table></div>
+
+          <div class="section-title"><span class="n">15</span> Evaluasi dan Kesimpulan</div>
+          <div class="radio-row">
+            ${['Validasi Diterima','Validasi Ditolak','Revalidasi'].map(opt=>`
+              <label><input type="radio" name="evalKesimpulan" value="${escAttr(opt)}" data-eval-radio ${p.evaluasiKesimpulan===opt?'checked':''}> ${opt}</label>
+            `).join('')}
+          </div>
+          <div class="field full" style="margin-top:14px"><label>Rekomendasi</label><textarea data-field="rekomendasi">${escapeHtml(p.rekomendasi)}</textarea></div>
+
+        </div>
+        <div class="drawer-footer">
+          <button class="btn btn-ghost" data-action="close-drawer">Batal</button>
+          <button class="btn btn-primary" data-action="save-product">Simpan Produk</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ---------- KELOLA KATEGORI ---------- */
+  function renderCategoryModal(){
+    const sections = [
+      { title:'Informasi Produk', types:['merk','namaProduk','bentukSediaan','batchSize','lokasiProduksi','peralatan','utilitas','tahapan','kebersihan','hasilValidasiKriteria'] },
+      { title:'CPP', types:['cppTahapan','cppParameter'] },
+      { title:'CQA', types:['cqaParameter'] },
+    ];
+    const groups = sections.map(section => {
+      const groupHtml = section.types.map(type=>{
+        const items = (state.categories[type]||[]);
+        const chips = items.map((v,i)=>`<span class="chip">${escapeHtml(v)} <button data-action="edit-category" data-type="${type}" data-idx="${i}" title="Edit">✎</button> <button data-action="remove-category" data-type="${type}" data-idx="${i}" title="Hapus">✕</button></span>`).join('') || `<span class="hint">Belum ada nilai. Akan otomatis muncul di sini saat kamu pilih "+ Tambah baru…" ketika mengisi Data Master.</span>`;
+        return `<div class="cat-group"><h4>${categoryLabel(type)}</h4><div>${chips}</div></div>`;
+      }).join('');
+      return `<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin:20px 0 12px;border-top:1px solid var(--border);padding-top:16px">${section.title}</div>${groupHtml}</div>`;
+    }).join('');
+
+    return `
+    <div class="overlay" data-action="close-category-overlay">
+      <div class="drawer" style="width:min(560px,96vw)" data-stop="1">
+        <div class="drawer-head"><h3>🗂 Kelola Kategori Dropdown</h3><button class="drawer-close" data-action="close-category-modal">✕</button></div>
+        <div class="drawer-body">
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">
+            Ini daftar semua nilai yang sudah pernah ditambahkan (untuk pengecekan apakah sesuatu sudah ada atau belum).
+            Untuk menambah nilai baru, pilih <strong>"+ Tambah baru…"</strong> langsung di dropdown saat mengisi Data Master.
+            Kamu hanya bisa menghapus nilai dari sini.
+          </p>
+          ${groups}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ---------- LOCK QA TAB ---------- */
+  function renderLockQA(){
+    if(!state.lockLoggedIn){
+      return `
+      <div class="login-wrap">
+        <div class="stamp">LOCK<br>QA</div>
+        <h2>Masuk ke Lock QA</h2>
+        <p>Halaman ini terpisah dari Data Master. Masukkan kata sandi tim QA untuk melanjutkan.</p>
+        <input type="password" id="lockPassInput" placeholder="Kata sandi">
+        ${state.lockLoginError ? `<div class="login-error">${escapeHtml(state.lockLoginError)}</div>` : ''}
+        <button class="btn btn-primary" style="width:100%;justify-content:center" data-action="lock-login">Masuk</button>
+      </div>`;
+    }
+    const rows = state.lockqa.map(r => {
+      const prod = state.products.find(p=>p.id===r.kodeId);
+      const kodeLabel = prod ? `${prod.kode} — ${fullName(prod)}` : (r.kodeId ? '(produk telah dihapus)' : '-');
+      const stCls = r.status==='Acc Supervisor QA' ? 'st-acc' : (r.status==='Ditolak' ? 'st-reject' : 'st-wait');
+      return `<tr>
+        <td>${escapeHtml(formatDateID(r.tanggalBerlaku)||'-')}</td><td class="mono">${escapeHtml(r.noDokumen||'-')}</td>
+        <td><span class="code-badge">${escapeHtml(kodeLabel)}</span></td>
+        <td style="white-space:normal;max-width:280px">${escapeHtml(r.alasanPerubahan||'-')}</td>
+        <td><span class="badge-status ${stCls}">${escapeHtml(r.status)}</span></td>
+        <td><div class="actions-cell">
+          <button class="icon-btn" data-action="edit-lock" data-id="${r.id}" title="Edit">✎</button>
+          <button class="icon-btn danger" data-action="delete-lock" data-id="${r.id}" title="Hapus">🗑</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+    return `
+      <div class="page-head">
+        <div><h2>Lock QA — Persetujuan Perubahan</h2><p>Login berhasil. Halaman ini hanya berisi data pengajuan/persetujuan, terpisah dari Data Master.</p></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost" data-action="lock-logout">Keluar</button>
+          <button class="btn btn-primary" data-action="new-lock">+ Tambah Pengajuan</button>
+        </div>
+      </div>
+      <div class="card"><div class="table-wrap">
+        ${state.lockqa.length===0 ? `<div class="empty-state"><div class="icon">🔒</div><h3>Belum ada pengajuan Lock QA</h3><p>Klik "Tambah Pengajuan" untuk membuat pengajuan perubahan baru.</p></div>` : `
+        <table><thead><tr><th>Tanggal Berlaku</th><th>No. Dokumen</th><th>Kode Produk</th><th>Alasan Perubahan</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${rows}</tbody></table>`}
+      </div></div>
+      ${state.lockDrawerOpen ? renderLockDrawer() : ''}
+    `;
+  }
+
+  function renderLockDrawer(){
+    const r = state.editingLock;
+    const options = state.products.filter(p => !p.deleted || r.kodeId===p.id).map(p => `<option value="${p.id}" ${r.kodeId===p.id?'selected':''}>${escapeHtml(p.kode)} — ${escapeHtml(fullName(p))}${p.deleted?' (diarsipkan)':''}</option>`).join('');
+    return `
+    <div class="overlay" data-action="lock-overlay-close">
+      <div class="drawer" style="width:min(520px,96vw)" data-stop="1">
+        <div class="drawer-head"><h3>${r._isNew ? 'Tambah Pengajuan Lock QA' : 'Edit Pengajuan Lock QA'}</h3><button class="drawer-close" data-action="close-lock-drawer">✕</button></div>
+        <div class="drawer-body">
+          <div class="field" style="margin-bottom:14px"><label>Tanggal Berlaku</label><input type="date" data-lockfield="tanggalBerlaku" value="${r.tanggalBerlaku}"></div>
+          <div class="field" style="margin-bottom:14px"><label>No. Dokumen</label><input type="text" class="mono" data-lockfield="noDokumen" value="${escAttr(r.noDokumen)}"></div>
+          <div class="field" style="margin-bottom:14px"><label>Alasan Perubahan</label><textarea data-lockfield="alasanPerubahan">${escapeHtml(r.alasanPerubahan)}</textarea></div>
+          <div class="field" style="margin-bottom:14px"><label>Pilih Kode Produk</label><select data-lockfield="kodeId"><option value="">— pilih kode —</option>${options}</select></div>
+          <div class="field" style="margin-bottom:14px"><label>Status</label>
+            <select data-lockfield="status">
+              <option ${r.status==='Menunggu'?'selected':''}>Menunggu</option>
+              <option ${r.status==='Acc Supervisor QA'?'selected':''}>Acc Supervisor QA</option>
+              <option ${r.status==='Ditolak'?'selected':''}>Ditolak</option>
+            </select>
+          </div>
+        </div>
+        <div class="drawer-footer"><button class="btn btn-ghost" data-action="close-lock-drawer">Batal</button><button class="btn btn-primary" data-action="save-lock">Simpan</button></div>
+      </div>
+    </div>`;
+  }
+
+  /* ---------- JADWAL KALIBRASI ---------- */
+  const KALIBRASI_DEPTS = [
+    {code:'PRD', label:'PRODUKSI'},
+    {code:'WH', label:'WAREHOUSE'},
+    {code:'RND', label:'RnD'},
+    {code:'QC', label:'QUALITY CONTROL'},
+    {code:'QA', label:'QUALITY ASSURANCE'},
+    {code:'ENG', label:'ENGINEERING'},
+  ];
+
+  function emptyKalibrasiEntry(dept){
+    return {
+      id: uid(), kategori:'KALIBRASI INTERNAL', departemen: dept, item:'', kodeItem:'',
+      namaAlat:'', merk:'', tipe:'', serialNo:'', skalaResolusi:'', lokasi:'',
+      frekuensi:'', calDate:'', dueDate:'', hasil:'', deleted:false
+    };
+  }
+
+  /* ---------- PERALATAN & SARANA PENUNJANG (tab konsolidasi) ---------- */
+  function renderPeralatanSarana(){
+    const subTabs = [
+      {key:'peralatan', label:'Peralatan'},
+      {key:'dataPeralatan', label:'Data Peralatan'},
+      {key:'kalibrasi', label:'Jadwal Kalibrasi'},
+      {key:'saranaPenunjang', label:'Sarana Penunjang'},
+    ];
+    const pills = subTabs.map(t=>`<button class="tab-btn ${state.peralatanSaranaSubTab===t.key?'active':''}" data-action="peralatansarana-subtab" data-subtab="${t.key}">${t.label}</button>`).join('');
+    let body = '';
+    if(state.peralatanSaranaSubTab === 'peralatan') body = renderInventarisMaster();
+    else if(state.peralatanSaranaSubTab === 'dataPeralatan') body = renderDataPeralatan();
+    else if(state.peralatanSaranaSubTab === 'kalibrasi') body = renderKalibrasi();
+    else body = renderSaranaPenunjangMaster();
+    return `
+      <div class="page-head">
+        <div><h2>Peralatan &amp; Sarana Penunjang</h2><p>Kelola data induk peralatan, kualifikasi (IQ/OQ/PQ), jadwal kalibrasi, dan sarana penunjang untuk semua produk.</p></div>
+      </div>
+      <div class="toolbar" style="flex-wrap:wrap">${pills}</div>
+      ${body}
+    `;
+  }
+
+  function renderInventarisMaster(){
+    const list = state.inventarisMaster || [];
+    const rows = list.map((item,i) => `
+      <tr>
+        <td style="text-align:center;color:var(--text-muted);font-size:12px">${i+1}</td>
+        <td class="mono">${escapeHtml(item.nomorInventaris)}</td>
+        <td>${escapeHtml(item.kategoriPeralatan)}</td>
+        <td>${escapeHtml(item.bagian)}</td>
+        <td>${escapeHtml(item.namaInventaris)}</td>
+        <td>${escapeHtml(item.merek)}</td>
+        <td>${escapeHtml(item.tipeSerialNumber)}</td>
+        <td>${escapeHtml(item.lokasi)}</td>
+        <td>${escapeHtml(item.statusAlat)}</td>
+      </tr>
+    `).join('');
+    return `
+      <p class="hint">Data ini dibaca otomatis (live) dari Google Sheets Daftar Induk Inventaris — tidak bisa diedit di sini. Kolom Nama Inventaris jadi sumber dropdown Peralatan di Data Master.</p>
+      <div class="card"><div class="table-wrap">
+        ${list.length===0 ? `<div class="empty-state"><div class="icon">📦</div><h3>Data belum termuat</h3><p>Kalau ini masih kosong setelah refresh, periksa apakah akun Apps Script sudah punya akses (minimal Viewer) ke spreadsheet Daftar Induk Inventaris.</p></div>` : `
+        <table><thead><tr><th>No.</th><th>Nomor Inventaris</th><th>Kategori</th><th>Bagian</th><th>Nama Inventaris</th><th>Merek</th><th>Tipe/Serial Number</th><th>Lokasi</th><th>Status Alat</th></tr></thead><tbody>${rows}</tbody></table>`}
+      </div></div>
+    `;
+  }
+
+  function emptyDataPeralatanEntry(){
+    return { id: uid(), namaAlat:'', jenisDokumen:'', nomorDokumenReferensi:'', tanggal:'', deleted:false };
+  }
+
+  function renderDataPeralatan(){
+    const list = (state.dataPeralatan||[]).filter(r => !!r.deleted === state.dataPeralatanShowArchived);
+    const archivedCount = (state.dataPeralatan||[]).filter(r=>r.deleted).length;
+    const namaAlatOpts = Array.from(new Set((state.inventarisMaster||[]).map(i=>i.namaInventaris).filter(Boolean))).map(n=>`<option value="${escAttr(n)}"></option>`).join('');
+    const rows = list.map((r,i)=>`
+      <tr>
+        <td style="width:30px;text-align:center;color:var(--text-muted);font-size:12px">${i+1}</td>
+        <td><input type="text" list="dl_dataPeralatan_namaAlat" data-dp="namaAlat" data-id="${r.id}" value="${escAttr(r.namaAlat)}" placeholder="Ketik/pilih nama alat…"></td>
+        <td><select data-dp="jenisDokumen" data-id="${r.id}">${optionsHtmlFixed(['IQ','OQ','PQ'], r.jenisDokumen)}</select></td>
+        <td><input type="text" data-dp="nomorDokumenReferensi" data-id="${r.id}" value="${escAttr(r.nomorDokumenReferensi)}"></td>
+        <td><input type="date" data-dp="tanggal" data-id="${r.id}" value="${r.tanggal}"></td>
+        <td style="width:${state.dataPeralatanShowArchived?'110px':'150px'}">
+          <div class="actions-cell">
+            ${state.dataPeralatanShowArchived ? `
+              <button class="icon-btn" data-action="dp-restore" data-id="${r.id}" title="Pulihkan">↩</button>
+              <button class="icon-btn danger" data-action="dp-purge" data-id="${r.id}" title="Hapus Permanen">🗑</button>
+            ` : `
+              ${moveRowButtonsHtml('move-dp-row', '', i, list.length)}
+              <button class="row-remove" data-action="dp-delete" data-id="${r.id}" title="Hapus">✕</button>
+            `}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    return `
+      <p class="hint">Isi kualifikasi (IQ/OQ/PQ) untuk tiap alat di sini. Data ini jadi sumber "Tanggal Kualifikasi" otomatis di tabel Peralatan pada Data Master.</p>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="btn btn-ghost" data-action="dp-toggle-archive">${state.dataPeralatanShowArchived ? '← Kembali' : `🗄 Arsip (${archivedCount})`}</button>
+        ${state.dataPeralatanShowArchived ? '' : `
+          <button class="btn btn-primary" data-action="dp-save">💾 Simpan Perubahan</button>
+          <button class="btn btn-primary" data-action="dp-add-row">+ Tambah Baris</button>
+        `}
+      </div>
+      <datalist id="dl_dataPeralatan_namaAlat">${namaAlatOpts}</datalist>
+      <div class="card"><div class="table-wrap">
+        ${list.length===0 ? `<div class="empty-state"><div class="icon">📋</div><h3>${state.dataPeralatanShowArchived?'Arsip kosong':'Belum ada data'}</h3><p>Klik "+ Tambah Baris" untuk mulai mengisi.</p></div>` : `
+        <table class="mini-table"><thead><tr><th>No.</th><th>Nama Alat</th><th>Jenis Dokumen</th><th>Nomor Dokumen Referensi</th><th>Tanggal</th><th></th></tr></thead><tbody>${rows}</tbody></table>`}
+      </div></div>
+    `;
+  }
+
+  function emptySaranaPenunjangMasterEntry(){
+    return { id: uid(), namaSarana:'', jenisDokumen:'', nomorDokumenReferensi:'', tanggal:'', deleted:false };
+  }
+
+  function renderSaranaPenunjangMaster(){
+    const list = (state.saranaPenunjangMaster||[]).filter(r => !!r.deleted === state.saranaPenunjangShowArchived);
+    const archivedCount = (state.saranaPenunjangMaster||[]).filter(r=>r.deleted).length;
+    const rows = list.map((r,i)=>`
+      <tr>
+        <td style="width:30px;text-align:center;color:var(--text-muted);font-size:12px">${i+1}</td>
+        <td><input type="text" data-sp="namaSarana" data-id="${r.id}" value="${escAttr(r.namaSarana)}" placeholder="mis. HVAC Ruang Produksi"></td>
+        <td><select data-sp="jenisDokumen" data-id="${r.id}">${optionsHtmlFixed(['IQ','OQ','PQ'], r.jenisDokumen)}</select></td>
+        <td><input type="text" data-sp="nomorDokumenReferensi" data-id="${r.id}" value="${escAttr(r.nomorDokumenReferensi)}"></td>
+        <td><input type="date" data-sp="tanggal" data-id="${r.id}" value="${r.tanggal}"></td>
+        <td style="width:${state.saranaPenunjangShowArchived?'110px':'150px'}">
+          <div class="actions-cell">
+            ${state.saranaPenunjangShowArchived ? `
+              <button class="icon-btn" data-action="sp-restore" data-id="${r.id}" title="Pulihkan">↩</button>
+              <button class="icon-btn danger" data-action="sp-purge" data-id="${r.id}" title="Hapus Permanen">🗑</button>
+            ` : `
+              ${moveRowButtonsHtml('move-sp-row', '', i, list.length)}
+              <button class="row-remove" data-action="sp-delete" data-id="${r.id}" title="Hapus">✕</button>
+            `}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    return `
+      <p class="hint">Isi daftar sarana penunjang (HVAC, sistem air, dll) beserta dokumen kualifikasinya (IQ/OQ/PQ) di sini. Ini jadi sumber dropdown Sarana Penunjang di Data Master.</p>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="btn btn-ghost" data-action="sp-toggle-archive">${state.saranaPenunjangShowArchived ? '← Kembali' : `🗄 Arsip (${archivedCount})`}</button>
+        ${state.saranaPenunjangShowArchived ? '' : `
+          <button class="btn btn-primary" data-action="sp-save">💾 Simpan Perubahan</button>
+          <button class="btn btn-primary" data-action="sp-add-row">+ Tambah Baris</button>
+        `}
+      </div>
+      <div class="card"><div class="table-wrap">
+        ${list.length===0 ? `<div class="empty-state"><div class="icon">🏭</div><h3>${state.saranaPenunjangShowArchived?'Arsip kosong':'Belum ada data'}</h3><p>Klik "+ Tambah Baris" untuk mulai mengisi.</p></div>` : `
+        <table class="mini-table"><thead><tr><th>No.</th><th>Nama Sarana Penunjang</th><th>Jenis Dokumen</th><th>Nomor Dokumen Referensi</th><th>Tanggal</th><th></th></tr></thead><tbody>${rows}</tbody></table>`}
+      </div></div>
+    `;
+  }
+
+  function renderKalibrasi(){
+    const deptInfo = KALIBRASI_DEPTS.find(d=>d.code===state.kalibrasiDept) || KALIBRASI_DEPTS[0];
+    const list = (state.jadwalKalibrasi||[]).filter(k => k.departemen===state.kalibrasiDept && !!k.deleted === state.kalibrasiShowArchived);
+    const archivedCount = (state.jadwalKalibrasi||[]).filter(k=>k.departemen===state.kalibrasiDept && k.deleted).length;
+
+    const pills = KALIBRASI_DEPTS.map(d=>`
+      <button class="tab-btn ${!state.kalibrasiShowArchived && state.kalibrasiDept===d.code ? 'active':''}" style="${state.kalibrasiDept===d.code?'':'background:transparent;color:var(--primary-dark);border:1px solid var(--border)'}" data-action="kalibrasi-goto-dept" data-dept="${d.code}">${d.label}</button>
+    `).join('');
+
+    const rows = list.map((k,i)=>`
+      <tr>
+        <td style="width:30px;text-align:center;color:var(--text-muted);font-size:12px">${i+1}</td>
+        <td><input type="text" data-kal="item" data-idx="${i}" data-id="${k.id}" value="${escAttr(k.item)}" placeholder="mis. TEMPERATURE/HUMIDITY"></td>
+        <td><input type="text" data-kal="kodeItem" data-idx="${i}" data-id="${k.id}" value="${escAttr(k.kodeItem)}"></td>
+        <td><input type="text" data-kal="namaAlat" data-idx="${i}" data-id="${k.id}" value="${escAttr(k.namaAlat)}"></td>
+        <td><input type="text" data-kal="merk" data-idx="${i}" data-id="${k.id}" value="${escAttr(k.merk)}"></td>
+        <td><input type="text" data-kal="tipe" data-idx="${i}" data-id="${k.id}" value="${escAttr(k.tipe)}"></td>
+        <td><input type="text" data-kal="serialNo" data-idx="${i}" data-id="${k.id}" value="${escAttr(k.serialNo)}"></td>
+        <td><input type="text" data-kal="skalaResolusi" data-idx="${i}" data-id="${k.id}" value="${escAttr(k.skalaResolusi)}"></td>
+        <td><input type="text" data-kal="lokasi" data-idx="${i}" data-id="${k.id}" value="${escAttr(k.lokasi)}"></td>
+        <td><input type="date" data-kal="calDate" data-idx="${i}" data-id="${k.id}" value="${k.calDate}"></td>
+        <td><input type="date" data-kal="dueDate" data-idx="${i}" data-id="${k.id}" value="${k.dueDate}"></td>
+        <td><input type="text" data-kal="frekuensi" data-idx="${i}" data-id="${k.id}" value="${escAttr(k.frekuensi)}"></td>
+        <td><input type="text" data-kal="hasil" data-idx="${i}" data-id="${k.id}" value="${escAttr(k.hasil)}"></td>
+        <td style="width:${state.kalibrasiShowArchived?'110px':'150px'}">
+          <div class="actions-cell">
+            ${state.kalibrasiShowArchived ? `
+              <button class="icon-btn" data-action="kalibrasi-restore" data-id="${k.id}" title="Pulihkan">↩</button>
+              <button class="icon-btn danger" data-action="kalibrasi-purge" data-id="${k.id}" title="Hapus Permanen">🗑</button>
+            ` : `
+              ${moveRowButtonsHtml('move-kalibrasi-row', '', i, list.length)}
+              <button class="row-remove" data-action="kalibrasi-delete" data-id="${k.id}" title="Hapus">✕</button>
+            `}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    const headers = `<th>No.</th><th>Item (Kategori)</th><th>Kode Item</th><th>Nama Alat</th><th>Merk</th><th>Tipe</th><th>Serial No.</th><th>Skala/Resolusi</th><th>Lokasi</th><th>Cal Date</th><th>Due Date</th><th>Frekuensi</th><th>Hasil</th><th></th>`;
+
+    return `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px">
+        <div><h3 style="margin:0 0 4px">Jadwal Kalibrasi — ${escapeHtml(deptInfo.label)}${state.kalibrasiShowArchived?' (Arsip)':''}</h3>
+        <p class="hint" style="margin:0">Data awal diambil dari Daftar Induk Identifikasi &amp; Kalibrasi Alat/Mesin. Bisa diedit langsung di sini, tersimpan ke Google Sheets.</p></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost" data-action="kalibrasi-toggle-archive">${state.kalibrasiShowArchived ? '← Kembali' : `🗄 Arsip (${archivedCount})`}</button>
+          <button class="btn btn-ghost" data-action="export-kalibrasi-excel">📊 Export Excel</button>
+          ${state.kalibrasiShowArchived ? '' : `
+            <button class="btn btn-primary" data-action="kalibrasi-save">💾 Simpan Perubahan</button>
+            <button class="btn btn-primary" data-action="kalibrasi-add-row">+ Tambah Alat</button>
+          `}
+        </div>
+      </div>
+      <div class="toolbar" style="flex-wrap:wrap">${pills}</div>
+      <div class="card"><div class="table-wrap">
+        ${list.length===0 ? `<div class="empty-state"><div class="icon">🌡️</div><h3>${state.kalibrasiShowArchived?'Arsip kosong':'Belum ada data'}</h3><p>${state.kalibrasiShowArchived?'Belum ada alat yang dihapus dari departemen ini.':'Klik "+ Tambah Alat" untuk menambahkan data kalibrasi.'}</p></div>` : `
+        <table class="mini-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`}
+      </div></div>
+    `;
+  }
+
+  /* ---- Export Jadwal Kalibrasi ke Excel (format sama seperti REPORT JADWAL KALIBRASI) ---- */
+  async function exportKalibrasiExcel(){
+    if(typeof XLSX === 'undefined'){ showToast('Gagal memuat pustaka Excel. Periksa koneksi internet.'); return; }
+    const active = (state.jadwalKalibrasi||[]).filter(k=>!k.deleted);
+    const aoa = [];
+    aoa.push(['REPORT JADWAL KALIBRASI']);
+    aoa.push([]);
+    aoa.push(['NO.','KODE ITEM','NAMA ALAT','MERK','TIPE','SERIAL NO.','SKALA/RESOLUSI','LOKASI','CAL DATE','DUE DATE','FREKUENSI','HASIL']);
+
+    KALIBRASI_DEPTS.forEach(dept=>{
+      const deptItems = active.filter(k=>k.departemen===dept.code);
+      if(deptItems.length===0) return;
+      aoa.push(['KALIBRASI INTERNAL']);
+      aoa.push([dept.label]);
+      const byItem = {};
+      const itemOrder = [];
+      deptItems.forEach(k=>{
+        const key = k.item || '(Tanpa Kategori)';
+        if(!byItem[key]){ byItem[key] = []; itemOrder.push(key); }
+        byItem[key].push(k);
+      });
+      itemOrder.forEach(itemName=>{
+        aoa.push(['ITEM : ' + itemName]);
+        byItem[itemName].forEach((k,i)=>{
+          aoa.push([i+1, k.kodeItem, k.namaAlat, k.merk, k.tipe, k.serialNo, k.skalaResolusi, k.lokasi, formatDateID(k.calDate), formatDateID(k.dueDate), k.frekuensi, k.hasil]);
+        });
+      });
+      aoa.push([]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:5},{wch:12},{wch:22},{wch:12},{wch:10},{wch:14},{wch:26},{wch:12},{wch:12},{wch:12},{wch:14},{wch:16}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'MASTER');
+    XLSX.writeFile(wb, 'Report Jadwal Kalibrasi.xlsx');
+  }
+
+  /* ---------- DETAIL PRODUK (digabung per Nama Produk) ---------- */
+  function uniqueNamaProdukList(){
+    const seen = new Map();
+    state.products.filter(p=>!p.deleted).forEach(p=>{ const key = String(p.namaProduk||'').trim(); if(key && !seen.has(key.toLowerCase())) seen.set(key.toLowerCase(), key); });
+    return Array.from(seen.values());
+  }
+
+  function renderBatchCard(p){
+    const st = lockStatusFor(p.id);
+    const jadwalRows = (p.jadwal||[]).filter(j=>j.tahapan||j.tanggal||j.nomorBatch).map(j=>`<tr><td>${escapeHtml(j.tahapan||'-')}</td><td>${escapeHtml(formatDateID(j.tanggal)||'-')}</td><td>${escapeHtml(j.nomorBatch||'-')}</td></tr>`).join('') || `<tr><td colspan="3" style="color:var(--text-muted)">Belum ada jadwal.</td></tr>`;
+
+    function fixedRowsView(obj, fields){
+      return fields.map(f=>`<div class="detail-item"><div class="lbl">${f.label}</div><div class="val ${obj[f.field]?'':'empty'}">${escapeHtml(obj[f.field]||'-')}</div></div>`).join('');
+    }
+
+    return `
+    <div class="card" style="padding:20px 22px;margin-bottom:22px;border-left:4px solid var(--primary)">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="code-badge" style="font-size:14px;padding:5px 12px">${escapeHtml(p.kode||'-')}</span>
+          <span class="badge-status ${st.cls}">${escapeHtml(st.label)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" data-action="export-docx" data-id="${p.id}">📄 Unduh Word</button>
+          <button class="btn btn-ghost btn-sm" data-action="export-pdf" data-id="${p.id}">🖨 Export PDF</button>
+          <span style="font-size:12px;color:var(--text-muted)">Diisi: ${escapeHtml(formatDateID(p.tanggalIsi)||'-')}</span>
+        </div>
+      </div>
+
+      <div class="detail-grid" style="margin-bottom:18px">
+        <div class="detail-item"><div class="lbl">Merk</div><div class="val ${p.merk?'':'empty'}">${escapeHtml(p.merk||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Bentuk Sediaan</div><div class="val ${p.bentukSediaan?'':'empty'}">${escapeHtml(p.bentukSediaan||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Batch Size (kg)</div><div class="val ${p.batchSize?'':'empty'}">${escapeHtml(p.batchSize||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Lokasi Produksi</div><div class="val ${p.lokasiProduksi?'':'empty'}">${escapeHtml(p.lokasiProduksi||'Belum diisi')}</div></div>
+
+        <div class="detail-item"><div class="lbl">DPI</div><div class="val ${p.dpi?'':'empty'}">${escapeHtml(p.dpi||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">PPI</div><div class="val ${p.ppi?'':'empty'}">${escapeHtml(p.ppi||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">CPB — Catatan Pengolahan Batch</div><div class="val ${p.cpb?'':'empty'}">${escapeHtml(p.cpb||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Spesifikasi Produk Ruahan</div><div class="val ${p.spesifikasiRuahan?'':'empty'}">${escapeHtml(p.spesifikasiRuahan||'Belum diisi')}</div></div>
+        <div class="detail-item"><div class="lbl">Spesifikasi Produk Jadi</div><div class="val ${p.spesifikasiProdukJadi?'':'empty'}">${escapeHtml(p.spesifikasiProdukJadi||'Belum diisi')}</div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:0">Kategori Tahapan</div>
+      <div class="table-wrap"><table><thead><tr><th>Tahapan</th><th>Tanggal</th><th>Nomor Batch</th></tr></thead><tbody>${jadwalRows}</tbody></table></div>
+
+      ${p.keteranganValidasi ? `<div class="section-title">Keterangan Validasi</div><div style="font-size:13.5px">${escapeHtml(p.keteranganValidasi)}</div>` : ''}
+
+      ${renderDynTableView(p, DYNAMIC_TABLES[0])}
+      ${renderDynTableView(p, DYNAMIC_TABLES[1])}
+      ${renderDynTableView(p, DYNAMIC_TABLES[2])}
+      ${renderDynTableView(p, DYNAMIC_TABLES[3])}
+
+      <div class="section-title">Kondisi Ruangan — Penimbangan</div>
+      <div class="detail-grid">${fixedRowsView(p.kondisiRuangan.penimbangan, [{field:'suhu',label:'Suhu (°C)'},{field:'rh',label:'RH (%)'},{field:'kebersihanArea',label:'Kebersihan Area'},{field:'kebersihanMesin',label:'Kebersihan Mesin'},{field:'diperiksaOleh',label:'Diperiksa Oleh'}])}</div>
+      <div class="section-title">Kondisi Ruangan — Pengolahan</div>
+      <div class="detail-grid">${fixedRowsView(p.kondisiRuangan.pengolahan, [{field:'suhu',label:'Suhu (°C)'},{field:'rh',label:'RH (%)'},{field:'kebersihanArea',label:'Kebersihan Area'},{field:'kebersihanMesin',label:'Kebersihan Mesin'},{field:'diperiksaOleh',label:'Diperiksa Oleh'}])}</div>
+
+      <div class="section-title">Bagan Alur Proses</div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px">${buildFlowchartSVG(p.alurProsesTahapan||[])}</div>
+
+      ${renderDynTableView(p, DYNAMIC_TABLES[4])}
+
+      ${p.tanggalSampling ? `<div class="section-title">Tanggal Sampling</div><div style="font-size:13.5px">${escapeHtml(formatDateID(p.tanggalSampling))}</div>` : ''}
+      ${renderDynTableView(p, DYNAMIC_TABLES[5])}
+      ${renderDynTableView(p, DYNAMIC_TABLES[6])}
+
+      <div class="section-title">Perhitungan Yield</div>
+      <div class="detail-grid">${fixedRowsView(p.yieldData, [{field:'bobotTeoritis',label:'Bobot Teoritis (kg)'},{field:'bobotAktual',label:'Bobot Aktual (kg)'},{field:'selisih',label:'Selisih'},{field:'rekonsiliasi',label:'Rekonsiliasi (%)'},{field:'keterangan',label:'Keterangan'}])}</div>
+
+      <div class="section-title">Hasil Validasi Proses</div>
+      <div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Kriteria</th><th>Hasil Aktual</th><th>Status</th><th>Pemeriksa</th></tr></thead><tbody>
+        ${['cpp','cqa','yieldRow','deviasi'].map(k=>{
+          const label = {cpp:'CPP',cqa:'CQA',yieldRow:'Yield',deviasi:'Deviasi'}[k];
+          const row = p.hasilValidasi[k];
+          return `<tr><td><strong>${label}</strong></td><td>${escapeHtml(row.kriteria||'-')}</td><td>${escapeHtml(row.hasilAktual||'-')}</td><td>${escapeHtml(row.status||'-')}</td><td>${escapeHtml(row.pemeriksa||'-')}</td></tr>`;
+        }).join('')}
+      </tbody></table></div>
+
+      ${p.evaluasiKesimpulan ? `<div class="section-title">Evaluasi dan Kesimpulan</div><div style="font-size:13.5px"><span class="badge-status st-acc">${escapeHtml(p.evaluasiKesimpulan)}</span></div>` : ''}
+      ${p.rekomendasi ? `<div class="section-title">Rekomendasi</div><div style="font-size:13.5px">${escapeHtml(p.rekomendasi)}</div>` : ''}
+    </div>`;
+  }
+
+  function renderDetail(){
+    const namaList = uniqueNamaProdukList();
+    const options = namaList.map(n => `<option value="${escAttr(n)}">${escapeHtml(n)}</option>`).join('');
+    const selectedKey = String(state.detailProductName||'').trim().toLowerCase();
+    const matches = selectedKey ? state.products.filter(p => !p.deleted && String(p.namaProduk||'').trim().toLowerCase() === selectedKey) : [];
+
+    let body = `<div class="empty-state"><div class="icon">📋</div><h3>Pilih produk untuk melihat detail</h3><p>Gunakan kotak pencarian di atas untuk mengetik/memilih Nama Produk. Jika ada beberapa batch/kode dengan nama produk yang sama, semua datanya akan digabung di sini.</p></div>`;
+
+    if(matches.length){
+      const merks = Array.from(new Set(matches.map(p=>p.merk).filter(Boolean)));
+      const allLock = [];
+      matches.forEach(p=>{ state.lockqa.filter(r=>r.kodeId===p.id).forEach(r=> allLock.push(Object.assign({}, r, { _kode: p.kode }))); });
+      const dokProtokolRows = allLock.map(r=>{
+        const stCls = r.status==='Acc Supervisor QA' ? 'st-acc' : (r.status==='Ditolak' ? 'st-reject' : 'st-wait');
+        return `<tr><td><span class="code-badge">${escapeHtml(r._kode||'-')}</span></td><td>${escapeHtml(formatDateID(r.tanggalBerlaku)||'-')}</td><td class="mono">${escapeHtml(r.noDokumen||'-')}</td><td style="white-space:normal;max-width:240px">${escapeHtml(r.alasanPerubahan||'-')}</td><td><span class="badge-status ${stCls}">${escapeHtml(r.status)}</span></td></tr>`;
+      }).join('') || `<tr><td colspan="5" style="color:var(--text-muted)">Belum ada dokumen protokol/pengajuan Lock QA untuk produk ini.</td></tr>`;
+
+      const batchCards = matches.map(renderBatchCard).join('');
+
+      body = `
+        <div class="card" style="padding:18px 22px;margin-bottom:22px;background:var(--primary-tint);border:none">
+          <div style="font-size:13px;color:var(--primary-dark)">
+            <strong>${matches.length} batch/kode</strong> ditemukan dengan Nama Produk yang sama.
+            ${merks.length ? ` Merk: ${merks.map(m=>`<span class="chip" style="background:#fff">${escapeHtml(m)}</span>`).join('')}` : ''}
+          </div>
+        </div>
+        <div class="section-title" style="margin-top:0">📦 Rincian per Batch/Kode</div>
+        ${batchCards}
+        <div class="section-title">📄 Dokumen Protokol (Lock QA) — gabungan semua kode</div>
+        <div class="card"><div class="table-wrap"><table><thead><tr><th>Kode</th><th>Tanggal Berlaku</th><th>No. Dokumen</th><th>Alasan Perubahan</th><th>Status</th></tr></thead><tbody>${dokProtokolRows}</tbody></table></div></div>
+      `;
+    }
+
+    return `
+      <div class="page-head"><div><h2>Detail Produk</h2><p>Pilih Nama Produk untuk melihat seluruh data (view-only). Jika ada beberapa kode/batch dengan nama produk sama, semuanya digabung di satu halaman.</p></div></div>
+      <div class="field full" style="max-width:480px;margin-bottom:20px"><label>Nama Produk</label><input type="text" id="detailProductSelect" list="dl_detailProduk" value="${escAttr(state.detailProductName)}" placeholder="Ketik untuk cari nama produk…"><datalist id="dl_detailProduk">${options}</datalist></div>
+      ${body}
+    `;
+  }
+
+  /* ---------------- EVENTS ---------------- */
+  function attachEvents(){
+    const app = document.getElementById('app');
+
+    app.querySelectorAll('[data-action="goto-tab"]').forEach(el=>{ el.onclick = () => { state.tab = el.dataset.tab; render(); }; });
+
+    const openSettingsBtn = app.querySelector('[data-action="open-settings"]');
+    if(openSettingsBtn) openSettingsBtn.onclick = () => { state.settingsOpen = true; render(); };
+    app.querySelectorAll('[data-action="close-settings"], [data-action="close-settings-overlay"]').forEach(el=>{
+      el.onclick = (e) => { if(e.target !== el && el.dataset.action==='close-settings-overlay') return; state.settingsOpen = false; render(); };
+    });
+    const settingsLoginBtn = app.querySelector('[data-action="settings-login"]');
+    if(settingsLoginBtn) settingsLoginBtn.onclick = async () => {
+      const val = app.querySelector('#settingsPassInput').value;
+      settingsLoginBtn.disabled = true;
+      const result = await checkPassword('settings', val);
+      settingsLoginBtn.disabled = false;
+      if(result === true){ state.settingsUnlocked = true; state.settingsPassError = ''; render(); }
+      else if(result === false){ state.settingsPassError = 'Password salah. Coba lagi.'; render(); }
+      else { state.settingsUnlocked = true; state.settingsPassError = ''; render(); showToast('Belum terhubung ke Google Sheets — password Pengaturan belum aktif.'); }
+    };
+    const settingsPassInput = app.querySelector('#settingsPassInput');
+    if(settingsPassInput) settingsPassInput.onkeydown = (e) => { if(e.key==='Enter') settingsLoginBtn.click(); };
+
+    const saveSettingsBtn = app.querySelector('[data-action="save-settings"]');
+    if(saveSettingsBtn) saveSettingsBtn.onclick = async () => {
+      const url = app.querySelector('#scriptUrlInput').value;
+      await saveScriptConfig(url);
+      state.settingsOpen = false;
+      showToast(state.syncError ? 'Tersimpan, tapi gagal terhubung. Cek URL.' : 'Tersambung ke Google Sheets.');
+      render();
+    };
+    const testBtn = app.querySelector('[data-action="test-connection"]');
+    if(testBtn) testBtn.onclick = async () => {
+      const url = app.querySelector('#scriptUrlInput').value.trim();
+      if(!url){ showToast('Isi URL dulu.'); return; }
+      state.syncing = true; render();
+      try{
+        const res = await fetch(url, { method:'GET' });
+        const json = await res.json();
+        showToast(json && json.ok ? 'Koneksi berhasil ✔' : ('Gagal: ' + ((json&&json.error)||'respons tidak valid')));
+      }catch(e){ showToast('Gagal terhubung. Periksa URL & pengaturan deployment.'); }
+      state.syncing = false; render();
+    };
+    const toggleRevealBtn = app.querySelector('[data-action="toggle-reveal"]');
+    if(toggleRevealBtn) toggleRevealBtn.onclick = () => { state.revealSecrets = !state.revealSecrets; render(); };
+
+    const refreshBtn = app.querySelector('[data-action="refresh-sheet"]');
+    if(refreshBtn) refreshBtn.onclick = async () => { await refreshFromSheet(); showToast('Data diperbarui dari Sheet.'); };
+
+    const toggleArchiveBtn = app.querySelector('[data-action="toggle-archive"]');
+    if(toggleArchiveBtn) toggleArchiveBtn.onclick = () => { state.showArchived = !state.showArchived; state.searchQuery=''; render(); };
+
+    const searchInput = app.querySelector('#searchInput');
+    if(searchInput) searchInput.oninput = () => { state.searchQuery = searchInput.value; refreshMasterTableWrap(); };
+
+    const openCatBtn = app.querySelector('[data-action="open-category-modal"]');
+    if(openCatBtn) openCatBtn.onclick = () => { state.categoryModalOpen = true; render(); };
+    app.querySelectorAll('[data-action="close-category-modal"], [data-action="close-category-overlay"]').forEach(el=>{
+      el.onclick = (e) => { if(e.target !== el && el.dataset.action==='close-category-overlay') return; state.categoryModalOpen = false; render(); };
+    });
+    app.querySelectorAll('[data-action="remove-category"]').forEach(el=>{
+      el.onclick = async () => { const type = el.dataset.type, idx = parseInt(el.dataset.idx); state.categories[type].splice(idx,1); await saveCategories(); render(); };
+    });
+    app.querySelectorAll('[data-action="edit-category"]').forEach(el=>{
+      el.onclick = async () => {
+        const type = el.dataset.type, idx = parseInt(el.dataset.idx);
+        const oldValue = state.categories[type][idx];
+        const newValue = window.prompt('Ubah nilai "' + oldValue + '" menjadi:', oldValue);
+        if(!newValue || !newValue.trim() || newValue.trim() === oldValue) return;
+        const v = newValue.trim();
+        state.categories[type][idx] = v;
+        const changed = cascadeCategoryRename(type, oldValue, v);
+        await saveCategories();
+        if(changed) await saveProducts();
+        showToast(changed ? 'Nilai diubah & data produk terkait ikut diperbarui.' : 'Nilai diubah.');
+        render();
+      };
+    });
+
+    const newBtn = app.querySelector('[data-action="new-product"]');
+    if(newBtn) newBtn.onclick = () => {
+      const p = emptyProduct(); p._isNew = true;
+      state.editingProduct = p; state.drawerOpen = true; render();
+    };
+    attachMasterTableEvents();
+
+    app.querySelectorAll('[data-action="close-drawer"], [data-action="overlay-close"]').forEach(el=>{
+      el.onclick = (e) => { if(e.target !== el && el.dataset.action==='overlay-close') return; state.drawerOpen = false; state.editingProduct = null; render(); };
+    });
+    const drawerInner = app.querySelector('.drawer[data-stop]');
+    if(drawerInner) drawerInner.onclick = (e)=> e.stopPropagation();
+
+    if(state.drawerOpen){
+      app.querySelectorAll('[data-field]').forEach(el=>{
+        el.oninput = () => {
+          const f = el.dataset.field;
+          if(f === 'kode'){ state.editingProduct.kode = el.value; state.editingProduct._kodeAuto = false; }
+          else { state.editingProduct[f] = el.value; }
+          const box = app.querySelector('.computed-box');
+          if(box && (f==='namaProdukLengkapOverride')){ box.textContent = fullName(state.editingProduct) || '—'; }
+        };
+      });
+      const resetKodeLink = app.querySelector('[data-action="reset-kode-auto"]');
+      if(resetKodeLink) resetKodeLink.onclick = (e) => {
+        e.preventDefault();
+        state.editingProduct._kodeAuto = true;
+        state.editingProduct.kode = computeAutoKode(state.editingProduct.namaProduk, state.editingProduct._isNew ? null : state.editingProduct.id);
+        render();
+      };
+
+      app.querySelectorAll('[data-field-select]').forEach(el=>{
+        el.onchange = async () => {
+          const field = el.dataset.fieldSelect;
+          if(el.value === '__add_new__'){
+            const type = field;
+            const newVal = window.prompt('Masukkan nilai baru untuk ' + categoryLabel(type) + ':');
+            if(newVal && newVal.trim()){
+              const v = newVal.trim();
+              if(!state.categories[type]) state.categories[type] = [];
+              if(!state.categories[type].includes(v)) state.categories[type].push(v);
+              state.editingProduct[field] = v;
+              await saveCategories();
+            } else { state.editingProduct[field] = ''; }
+          } else { state.editingProduct[field] = el.value; }
+          if(field === 'namaProduk' && state.editingProduct._isNew && state.editingProduct._kodeAuto !== false){
+            state.editingProduct.kode = computeAutoKode(state.editingProduct.namaProduk, null);
+          }
+          render();
+        };
+      });
+
+      app.querySelectorAll('[data-jadwal="tanggal"]').forEach(el=>{ el.oninput = () => { state.editingProduct.jadwal[parseInt(el.dataset.idx)].tanggal = el.value; }; });
+      app.querySelectorAll('[data-jadwal="nomorBatch"]').forEach(el=>{ el.oninput = () => { state.editingProduct.jadwal[parseInt(el.dataset.idx)].nomorBatch = el.value; }; });
+      app.querySelectorAll('[data-jadwal="tahapan"]').forEach(el=>{
+        el.onchange = async () => {
+          const idx = parseInt(el.dataset.idx);
+          if(el.value === '__add_new__'){
+            const newVal = window.prompt('Masukkan tahapan baru (mis. Validasi Proses 7):');
+            if(newVal && newVal.trim()){
+              const v = newVal.trim();
+              if(!state.categories.tahapan) state.categories.tahapan = [];
+              if(!state.categories.tahapan.includes(v)) state.categories.tahapan.push(v);
+              state.editingProduct.jadwal[idx].tahapan = v;
+              await saveCategories();
+            } else { state.editingProduct.jadwal[idx].tahapan = ''; }
+          } else { state.editingProduct.jadwal[idx].tahapan = el.value; }
+          render();
+        };
+      });
+      const addJadwalBtn = app.querySelector('[data-action="add-jadwal"]');
+      if(addJadwalBtn) addJadwalBtn.onclick = () => {
+        state.editingProduct.jadwal.push({tahapan:'', tanggal:'', nomorBatch:''});
+        render();
+      };
+      app.querySelectorAll('[data-action="remove-jadwal"]').forEach(el=>{
+        el.onclick = () => {
+          state.editingProduct.jadwal.splice(parseInt(el.dataset.idx),1);
+          if(state.editingProduct.jadwal.length===0) state.editingProduct.jadwal.push({tahapan:'',tanggal:'',nomorBatch:''});
+          render();
+        };
+      });
+      app.querySelectorAll('[data-action="move-jadwal-up"]').forEach(el=>{
+        el.onclick = () => { moveArrayItem(state.editingProduct.jadwal, parseInt(el.dataset.idx), -1); render(); };
+      });
+      app.querySelectorAll('[data-action="move-jadwal-down"]').forEach(el=>{
+        el.onclick = () => { moveArrayItem(state.editingProduct.jadwal, parseInt(el.dataset.idx), 1); render(); };
+      });
+
+      app.querySelectorAll('input[data-nested]').forEach(el=>{
+        el.oninput = () => {
+          setNested(state.editingProduct, el.dataset.nested, el.value);
+          if(el.dataset.nested === 'yieldData.bobotTeoritis' || el.dataset.nested === 'yieldData.bobotAktual'){
+            const teoritis = parseFloat(state.editingProduct.yieldData.bobotTeoritis);
+            const aktual = parseFloat(state.editingProduct.yieldData.bobotAktual);
+            if(!isNaN(teoritis) && teoritis !== 0 && !isNaN(aktual)){
+              const rekon = (aktual / teoritis) * 100;
+              const rekonStr = formatNum(rekon);
+              state.editingProduct.yieldData.rekonsiliasi = rekonStr;
+              const rekonInput = app.querySelector('[data-nested="yieldData.rekonsiliasi"]');
+              if(rekonInput) rekonInput.value = rekonStr;
+            }
+          }
+        };
+      });
+      app.querySelectorAll('select[data-nested]').forEach(el=>{
+        el.onchange = async () => {
+          const path = el.dataset.nested;
+          const catType = el.dataset.cat || 'kebersihan';
+          if(el.value === '__add_new__'){
+            const newVal = window.prompt('Masukkan nilai baru untuk ' + categoryLabel(catType) + ':');
+            if(newVal && newVal.trim()){
+              const v = newVal.trim();
+              if(!state.categories[catType]) state.categories[catType] = [];
+              if(!state.categories[catType].includes(v)) state.categories[catType].push(v);
+              setNested(state.editingProduct, path, v);
+              await saveCategories();
+            } else {
+              setNested(state.editingProduct, path, '');
+            }
+          } else {
+            setNested(state.editingProduct, path, el.value);
+          }
+          render();
+        };
+      });
+
+      app.querySelectorAll('[data-field-external]').forEach(el=>{
+        el.oninput = () => { state.editingProduct[el.dataset.fieldExternal] = el.value; };
+      });
+
+      app.querySelectorAll('[data-eval-radio]').forEach(el=>{
+        el.onchange = () => { state.editingProduct.evaluasiKesimpulan = el.value; };
+      });
+
+      DYNAMIC_TABLES.forEach(cfg=>{
+        app.querySelectorAll(`[data-dyn^="${cfg.key}:"]`).forEach(el=>{
+          const field = el.dataset.dyn.split(':')[1];
+          const idx = parseInt(el.dataset.idx);
+          const col = cfg.columns.find(c=>c.field===field);
+          if(col.type === 'select'){
+            el.onchange = async () => {
+              if(el.value === '__add_new__'){
+                const newVal = window.prompt('Masukkan nilai baru untuk ' + categoryLabel(col.cat) + ':');
+                if(newVal && newVal.trim()){
+                  const v = newVal.trim();
+                  if(!state.categories[col.cat]) state.categories[col.cat] = [];
+                  if(!state.categories[col.cat].includes(v)) state.categories[col.cat].push(v);
+                  state.editingProduct[cfg.key][idx][field] = v;
+                  await saveCategories();
+                } else { state.editingProduct[cfg.key][idx][field] = ''; }
+              } else { state.editingProduct[cfg.key][idx][field] = el.value; }
+              render();
+            };
+          } else if(col.type === 'fixedselect'){
+            el.onchange = () => {
+              state.editingProduct[cfg.key][idx][field] = el.value;
+              if(cfg.key === 'saranaPenunjang' && field === 'jenisDokumen'){
+                autofillSaranaPenunjangRow(idx);
+              }
+            };
+          } else if(col.type === 'externalBahanBaku'){
+            el.oninput = () => {
+              const val = el.value;
+              state.editingProduct[cfg.key][idx][field] = val;
+              const match = (state.externalLists.bahanBaku||[]).find(i=>i.kode===val);
+              if(match){
+                if(cfg.key === 'spesifikasiBahanBaku'){
+                  const row = state.editingProduct[cfg.key][idx];
+                  row.namaDagang = match.nama || '';
+                  row.namaProdusen = match.produsen || '';
+                  row.namaSupplier = match.pemasok || '';
+                }
+                if(cfg.key === 'formula'){
+                  ensureSpesifikasiBahanBakuRow(val);
+                }
+                render();
+              }
+            };
+          } else if(col.type === 'externalBahanBakuDoc'){
+            el.oninput = () => { state.editingProduct[cfg.key][idx][field] = el.value; };
+          } else if(col.type === 'externalInventaris'){
+            el.oninput = () => {
+              const val = el.value;
+              state.editingProduct[cfg.key][idx][field] = val;
+              const match = (state.inventarisMaster||[]).find(i=>i.namaInventaris===val);
+              if(match){
+                const row = state.editingProduct[cfg.key][idx];
+                row.nomorInventaris = match.nomorInventaris || '';
+                const namaLower = val.trim().toLowerCase();
+                let kalMatches = (state.jadwalKalibrasi||[]).filter(k=>!k.deleted && k.kodeItem===match.nomorInventaris && k.calDate);
+                if(!kalMatches.length){
+                  // fallback: kode di Daftar Induk Inventaris beda format dengan Kode Item Jadwal Kalibrasi,
+                  // coba cocokkan lewat nama alat saja sebagai perkiraan awal.
+                  kalMatches = (state.jadwalKalibrasi||[]).filter(k=>!k.deleted && k.calDate && String(k.namaAlat||'').trim().toLowerCase()===namaLower);
+                }
+                if(kalMatches.length){
+                  const latest = kalMatches.reduce((a,b)=> (a.calDate > b.calDate ? a : b));
+                  row.tanggalKalibrasi = formatDateID(latest.calDate);
+                } else {
+                  row.tanggalKalibrasi = '-';
+                }
+                const dpMatches = (state.dataPeralatan||[]).filter(d=>!d.deleted && d.namaAlat===val && d.jenisDokumen);
+                row.tanggalKualifikasi = dpMatches.length
+                  ? dpMatches.map(d=>`${d.jenisDokumen}: ${formatDateID(d.tanggal)||'-'}`).join(', ')
+                  : '-';
+                render();
+              }
+            };
+          } else if(col.type === 'externalSaranaPenunjang'){
+            el.oninput = () => {
+              state.editingProduct[cfg.key][idx][field] = el.value;
+              autofillSaranaPenunjangRow(idx);
+            };
+          } else {
+            el.oninput = () => {
+              state.editingProduct[cfg.key][idx][field] = el.value;
+              if(cfg.key === 'formula' && field === 'konsentrasiPercent'){
+                const pct = parseFloat(el.value);
+                const batchSize = parseFloat(state.editingProduct.batchSize);
+                if(!isNaN(pct) && !isNaN(batchSize)){
+                  const jumlah = (pct/100) * batchSize * 1000;
+                  const jumlahStr = formatNum(jumlah);
+                  state.editingProduct.formula[idx].jumlahG = jumlahStr;
+                  const jumlahInput = app.querySelector(`[data-dyn="formula:jumlahG"][data-idx="${idx}"]`);
+                  if(jumlahInput) jumlahInput.value = jumlahStr;
+                }
+              }
+              if(cfg.key === 'formula'){
+                const t = computeFormulaTotals(state.editingProduct.formula);
+                const tp = app.querySelector('#formulaTotalPercent');
+                const tg = app.querySelector('#formulaTotalGram');
+                if(tp) tp.textContent = formatNum(t.totalPercent);
+                if(tg) tg.textContent = formatNum(t.totalGram);
+              }
+            };
+          }
+        });
+      });
+      app.querySelectorAll('[data-action="add-dyn-row"]').forEach(el=>{
+        el.onclick = () => { const cfg = DYNAMIC_TABLES.find(t=>t.key===el.dataset.table); state.editingProduct[cfg.key].push(emptyRowFor(cfg)); render(); };
+      });
+      app.querySelectorAll('[data-action="copy-from-previous"]').forEach(el=>{
+        el.onclick = () => {
+          const tableKey = el.dataset.table;
+          const sourceProduct = state.products.find(x=>x.id===el.dataset.sourceId);
+          if(!sourceProduct) return;
+          const hasCurrentData = (state.editingProduct[tableKey]||[]).some(row=>Object.values(row).some(v=>v));
+          if(hasCurrentData && !confirm('Ini akan menimpa isian yang sedang kamu edit di tabel ini. Lanjutkan?')) return;
+          state.editingProduct[tableKey] = JSON.parse(JSON.stringify(sourceProduct[tableKey]));
+          showToast('Data berhasil disalin.');
+          render();
+        };
+      });
+      app.querySelectorAll('[data-action="remove-dyn-row"]').forEach(el=>{
+        el.onclick = () => {
+          const cfg = DYNAMIC_TABLES.find(t=>t.key===el.dataset.table);
+          state.editingProduct[cfg.key].splice(parseInt(el.dataset.idx),1);
+          if(state.editingProduct[cfg.key].length===0) state.editingProduct[cfg.key].push(emptyRowFor(cfg));
+          render();
+        };
+      });
+      app.querySelectorAll('[data-action="move-dyn-row-up"]').forEach(el=>{
+        el.onclick = () => { moveArrayItem(state.editingProduct[el.dataset.table], parseInt(el.dataset.idx), -1); render(); };
+      });
+      app.querySelectorAll('[data-action="move-dyn-row-down"]').forEach(el=>{
+        el.onclick = () => { moveArrayItem(state.editingProduct[el.dataset.table], parseInt(el.dataset.idx), 1); render(); };
+      });
+
+      app.querySelectorAll('[data-flow-idx]').forEach(el=>{
+        el.oninput = () => {
+          state.editingProduct.alurProsesTahapan[parseInt(el.dataset.flowIdx)] = el.value;
+          const preview = document.getElementById('flowchartPreview');
+          if(preview) preview.innerHTML = buildFlowchartSVG(state.editingProduct.alurProsesTahapan);
+        };
+      });
+      const addFlowBtn = app.querySelector('[data-action="add-flow-step"]');
+      if(addFlowBtn) addFlowBtn.onclick = () => { state.editingProduct.alurProsesTahapan.push(''); render(); };
+      app.querySelectorAll('[data-action="remove-flow-step"]').forEach(el=>{
+        el.onclick = () => {
+          state.editingProduct.alurProsesTahapan.splice(parseInt(el.dataset.idx),1);
+          if(state.editingProduct.alurProsesTahapan.length===0) state.editingProduct.alurProsesTahapan.push('');
+          render();
+        };
+      });
+      app.querySelectorAll('[data-action="move-flow-step-up"]').forEach(el=>{
+        el.onclick = () => { moveArrayItem(state.editingProduct.alurProsesTahapan, parseInt(el.dataset.idx), -1); render(); };
+      });
+      app.querySelectorAll('[data-action="move-flow-step-down"]').forEach(el=>{
+        el.onclick = () => { moveArrayItem(state.editingProduct.alurProsesTahapan, parseInt(el.dataset.idx), 1); render(); };
+      });
+
+      const saveBtn = app.querySelector('[data-action="save-product"]');
+      if(saveBtn) saveBtn.onclick = async () => {
+        if(!state.editingProduct.kode || !state.editingProduct.merk){ showToast('Kode dan Merk wajib diisi.'); return; }
+        const idx = state.products.findIndex(x=>x.id===state.editingProduct.id);
+        const clean = JSON.parse(JSON.stringify(state.editingProduct));
+        delete clean._isNew; delete clean._kodeAuto;
+        if(idx>=0) state.products[idx] = clean; else state.products.push(clean);
+        await saveProducts();
+        state.drawerOpen = false; state.editingProduct = null;
+        showToast('Data produk tersimpan.'); render();
+      };
+    }
+
+    const loginBtn = app.querySelector('[data-action="lock-login"]');
+    if(loginBtn) loginBtn.onclick = async () => {
+      const val = app.querySelector('#lockPassInput').value;
+      loginBtn.disabled = true;
+      const result = await checkPassword('lockqa', val);
+      loginBtn.disabled = false;
+      if(result === true){ state.lockLoggedIn = true; state.lockLoginError=''; render(); }
+      else if(result === false){ state.lockLoginError = 'Kata sandi salah. Coba lagi.'; render(); }
+      else { state.lockLoggedIn = true; state.lockLoginError=''; render(); showToast('Belum terhubung ke Google Sheets — password Lock QA belum aktif.'); }
+    };
+    const passInput = app.querySelector('#lockPassInput');
+    if(passInput) passInput.onkeydown = (e)=>{ if(e.key==='Enter') loginBtn.click(); };
+
+    const logoutBtn = app.querySelector('[data-action="lock-logout"]');
+    if(logoutBtn) logoutBtn.onclick = () => { state.lockLoggedIn = false; render(); };
+
+    const newLockBtn = app.querySelector('[data-action="new-lock"]');
+    if(newLockBtn) newLockBtn.onclick = () => {
+      state.editingLock = {id:uid(), tanggalBerlaku:'', noDokumen:'', alasanPerubahan:'', kodeId:'', status:'Menunggu', _isNew:true};
+      state.lockDrawerOpen = true; render();
+    };
+    app.querySelectorAll('[data-action="edit-lock"]').forEach(el=>{
+      el.onclick = () => { const orig = state.lockqa.find(x=>x.id===el.dataset.id); state.editingLock = JSON.parse(JSON.stringify(orig)); state.lockDrawerOpen = true; render(); };
+    });
+    app.querySelectorAll('[data-action="delete-lock"]').forEach(el=>{
+      el.onclick = async () => { if(!confirm('Hapus pengajuan ini?')) return; state.lockqa = state.lockqa.filter(x=>x.id!==el.dataset.id); await saveLockQA(); showToast('Pengajuan dihapus.'); render(); };
+    });
+    app.querySelectorAll('[data-action="close-lock-drawer"], [data-action="lock-overlay-close"]').forEach(el=>{
+      el.onclick = (e) => { if(e.target !== el && el.dataset.action==='lock-overlay-close') return; state.lockDrawerOpen=false; state.editingLock=null; render(); };
+    });
+    if(state.lockDrawerOpen){
+      const lockDrawerInner = app.querySelector('.drawer[data-stop]');
+      if(lockDrawerInner) lockDrawerInner.onclick = (e)=>e.stopPropagation();
+      app.querySelectorAll('[data-lockfield]').forEach(el=>{
+        el.oninput = () => { state.editingLock[el.dataset.lockfield] = el.value; };
+        el.onchange = () => { state.editingLock[el.dataset.lockfield] = el.value; };
+      });
+      const saveLockBtn = app.querySelector('[data-action="save-lock"]');
+      if(saveLockBtn) saveLockBtn.onclick = async () => {
+        if(!state.editingLock.kodeId || !state.editingLock.noDokumen){ showToast('Kode produk dan No. Dokumen wajib diisi.'); return; }
+        const idx = state.lockqa.findIndex(x=>x.id===state.editingLock.id);
+        const clean = JSON.parse(JSON.stringify(state.editingLock));
+        delete clean._isNew;
+        if(idx>=0) state.lockqa[idx] = clean; else state.lockqa.push(clean);
+        await saveLockQA();
+        state.lockDrawerOpen=false; state.editingLock=null;
+        showToast('Pengajuan Lock QA tersimpan.'); render();
+      };
+    }
+
+    const detailSelect = app.querySelector('#detailProductSelect');
+    if(detailSelect) detailSelect.oninput = () => {
+      const typed = detailSelect.value;
+      if(typed.trim() === ''){ state.detailProductName = ''; render(); return; }
+      const list = uniqueNamaProdukList();
+      const match = list.find(n => n.toLowerCase() === typed.trim().toLowerCase());
+      if(match){ state.detailProductName = match; render(); }
+    };
+
+    // Jadwal Kalibrasi
+    app.querySelectorAll('[data-action="kalibrasi-goto-dept"]').forEach(el=>{
+      el.onclick = () => { state.kalibrasiDept = el.dataset.dept; state.kalibrasiShowArchived = false; render(); };
+    });
+    const kalToggleArchiveBtn = app.querySelector('[data-action="kalibrasi-toggle-archive"]');
+    if(kalToggleArchiveBtn) kalToggleArchiveBtn.onclick = () => { state.kalibrasiShowArchived = !state.kalibrasiShowArchived; render(); };
+    const kalAddBtn = app.querySelector('[data-action="kalibrasi-add-row"]');
+    if(kalAddBtn) kalAddBtn.onclick = async () => {
+      state.jadwalKalibrasi.push(emptyKalibrasiEntry(state.kalibrasiDept));
+      await saveJadwalKalibrasi();
+      render();
+    };
+    app.querySelectorAll('[data-action="kalibrasi-delete"]').forEach(el=>{
+      el.onclick = async () => {
+        if(!confirm('Hapus data alat ini? Data tetap tersimpan di Arsip.')) return;
+        const item = state.jadwalKalibrasi.find(k=>k.id===el.dataset.id);
+        if(item) item.deleted = true;
+        await saveJadwalKalibrasi(); showToast('Dipindah ke Arsip.'); render();
+      };
+    });
+    app.querySelectorAll('[data-action="kalibrasi-restore"]').forEach(el=>{
+      el.onclick = async () => {
+        const item = state.jadwalKalibrasi.find(k=>k.id===el.dataset.id);
+        if(item) item.deleted = false;
+        await saveJadwalKalibrasi(); showToast('Dipulihkan.'); render();
+      };
+    });
+    app.querySelectorAll('[data-action="kalibrasi-purge"]').forEach(el=>{
+      el.onclick = async () => {
+        if(!confirm('Hapus PERMANEN data ini? Tidak bisa dibatalkan.')) return;
+        state.jadwalKalibrasi = state.jadwalKalibrasi.filter(k=>k.id!==el.dataset.id);
+        await saveJadwalKalibrasi(); showToast('Dihapus permanen.'); render();
+      };
+    });
+    app.querySelectorAll('[data-action="move-kalibrasi-row-up"], [data-action="move-kalibrasi-row-down"]').forEach(el=>{
+      el.onclick = async () => {
+        const dir = el.dataset.action.endsWith('up') ? -1 : 1;
+        const visibleList = (state.jadwalKalibrasi||[]).filter(k => k.departemen===state.kalibrasiDept && !k.deleted);
+        const idx = parseInt(el.dataset.idx);
+        const itemA = visibleList[idx];
+        const itemB = visibleList[idx+dir];
+        if(!itemA || !itemB) return;
+        const realIdxA = state.jadwalKalibrasi.indexOf(itemA);
+        const realIdxB = state.jadwalKalibrasi.indexOf(itemB);
+        state.jadwalKalibrasi[realIdxA] = itemB;
+        state.jadwalKalibrasi[realIdxB] = itemA;
+        await saveJadwalKalibrasi(); render();
+      };
+    });
+    app.querySelectorAll('[data-kal]').forEach(el=>{
+      el.oninput = () => {
+        const item = state.jadwalKalibrasi.find(k=>k.id===el.dataset.id);
+        if(item) item[el.dataset.kal] = el.value;
+      };
+    });
+    const exportKalBtn = app.querySelector('[data-action="export-kalibrasi-excel"]');
+    if(exportKalBtn) exportKalBtn.onclick = async () => { await exportKalibrasiExcel(); };
+    const kalSaveBtn = app.querySelector('[data-action="kalibrasi-save"]');
+    if(kalSaveBtn) kalSaveBtn.onclick = async () => { await saveJadwalKalibrasi(); showToast('Perubahan Jadwal Kalibrasi tersimpan.'); };
+
+    // Peralatan & Sarana Penunjang - navigasi sub-tab
+    app.querySelectorAll('[data-action="peralatansarana-subtab"]').forEach(el=>{
+      el.onclick = () => { state.peralatanSaranaSubTab = el.dataset.subtab; render(); };
+    });
+
+    // Data Peralatan
+    const dpAddBtn = app.querySelector('[data-action="dp-add-row"]');
+    if(dpAddBtn) dpAddBtn.onclick = async () => { state.dataPeralatan.push(emptyDataPeralatanEntry()); await saveDataPeralatan(); render(); };
+    const dpToggleArchiveBtn = app.querySelector('[data-action="dp-toggle-archive"]');
+    if(dpToggleArchiveBtn) dpToggleArchiveBtn.onclick = () => { state.dataPeralatanShowArchived = !state.dataPeralatanShowArchived; render(); };
+    const dpSaveBtn = app.querySelector('[data-action="dp-save"]');
+    if(dpSaveBtn) dpSaveBtn.onclick = async () => { await saveDataPeralatan(); showToast('Perubahan Data Peralatan tersimpan.'); };
+    app.querySelectorAll('[data-action="dp-delete"]').forEach(el=>{
+      el.onclick = async () => {
+        if(!confirm('Hapus data ini? Data tetap tersimpan di Arsip.')) return;
+        const item = state.dataPeralatan.find(r=>r.id===el.dataset.id);
+        if(item) item.deleted = true;
+        await saveDataPeralatan(); showToast('Dipindah ke Arsip.'); render();
+      };
+    });
+    app.querySelectorAll('[data-action="dp-restore"]').forEach(el=>{
+      el.onclick = async () => {
+        const item = state.dataPeralatan.find(r=>r.id===el.dataset.id);
+        if(item) item.deleted = false;
+        await saveDataPeralatan(); showToast('Dipulihkan.'); render();
+      };
+    });
+    app.querySelectorAll('[data-action="dp-purge"]').forEach(el=>{
+      el.onclick = async () => {
+        if(!confirm('Hapus PERMANEN data ini? Tidak bisa dibatalkan.')) return;
+        state.dataPeralatan = state.dataPeralatan.filter(r=>r.id!==el.dataset.id);
+        await saveDataPeralatan(); showToast('Dihapus permanen.'); render();
+      };
+    });
+    app.querySelectorAll('[data-action="move-dp-row-up"], [data-action="move-dp-row-down"]').forEach(el=>{
+      el.onclick = async () => {
+        const dir = el.dataset.action.endsWith('up') ? -1 : 1;
+        const visibleList = (state.dataPeralatan||[]).filter(r => !r.deleted);
+        const idx = parseInt(el.dataset.idx);
+        const a = visibleList[idx], b = visibleList[idx+dir];
+        if(!a || !b) return;
+        const ia = state.dataPeralatan.indexOf(a), ib = state.dataPeralatan.indexOf(b);
+        state.dataPeralatan[ia] = b; state.dataPeralatan[ib] = a;
+        await saveDataPeralatan(); render();
+      };
+    });
+    app.querySelectorAll('[data-dp]').forEach(el=>{
+      const handler = () => {
+        const item = state.dataPeralatan.find(r=>r.id===el.dataset.id);
+        if(item) item[el.dataset.dp] = el.value;
+      };
+      if(el.tagName === 'SELECT') el.onchange = handler; else el.oninput = handler;
+    });
+
+    // Sarana Penunjang Master
+    const spAddBtn = app.querySelector('[data-action="sp-add-row"]');
+    if(spAddBtn) spAddBtn.onclick = async () => { state.saranaPenunjangMaster.push(emptySaranaPenunjangMasterEntry()); await saveSaranaPenunjangMaster(); render(); };
+    const spToggleArchiveBtn = app.querySelector('[data-action="sp-toggle-archive"]');
+    if(spToggleArchiveBtn) spToggleArchiveBtn.onclick = () => { state.saranaPenunjangShowArchived = !state.saranaPenunjangShowArchived; render(); };
+    const spSaveBtn = app.querySelector('[data-action="sp-save"]');
+    if(spSaveBtn) spSaveBtn.onclick = async () => { await saveSaranaPenunjangMaster(); showToast('Perubahan Sarana Penunjang tersimpan.'); };
+    app.querySelectorAll('[data-action="sp-delete"]').forEach(el=>{
+      el.onclick = async () => {
+        if(!confirm('Hapus data ini? Data tetap tersimpan di Arsip.')) return;
+        const item = state.saranaPenunjangMaster.find(r=>r.id===el.dataset.id);
+        if(item) item.deleted = true;
+        await saveSaranaPenunjangMaster(); showToast('Dipindah ke Arsip.'); render();
+      };
+    });
+    app.querySelectorAll('[data-action="sp-restore"]').forEach(el=>{
+      el.onclick = async () => {
+        const item = state.saranaPenunjangMaster.find(r=>r.id===el.dataset.id);
+        if(item) item.deleted = false;
+        await saveSaranaPenunjangMaster(); showToast('Dipulihkan.'); render();
+      };
+    });
+    app.querySelectorAll('[data-action="sp-purge"]').forEach(el=>{
+      el.onclick = async () => {
+        if(!confirm('Hapus PERMANEN data ini? Tidak bisa dibatalkan.')) return;
+        state.saranaPenunjangMaster = state.saranaPenunjangMaster.filter(r=>r.id!==el.dataset.id);
+        await saveSaranaPenunjangMaster(); showToast('Dihapus permanen.'); render();
+      };
+    });
+    app.querySelectorAll('[data-action="move-sp-row-up"], [data-action="move-sp-row-down"]').forEach(el=>{
+      el.onclick = async () => {
+        const dir = el.dataset.action.endsWith('up') ? -1 : 1;
+        const visibleList = (state.saranaPenunjangMaster||[]).filter(r => !r.deleted);
+        const idx = parseInt(el.dataset.idx);
+        const a = visibleList[idx], b = visibleList[idx+dir];
+        if(!a || !b) return;
+        const ia = state.saranaPenunjangMaster.indexOf(a), ib = state.saranaPenunjangMaster.indexOf(b);
+        state.saranaPenunjangMaster[ia] = b; state.saranaPenunjangMaster[ib] = a;
+        await saveSaranaPenunjangMaster(); render();
+      };
+    });
+    app.querySelectorAll('[data-sp]').forEach(el=>{
+      const handler = () => {
+        const item = state.saranaPenunjangMaster.find(r=>r.id===el.dataset.id);
+        if(item) item[el.dataset.sp] = el.value;
+      };
+      if(el.tagName === 'SELECT') el.onchange = handler; else el.oninput = handler;
+    });
+
+    app.querySelectorAll('[data-action="export-docx"]').forEach(el=>{
+      el.onclick = async () => {
+        const p = state.products.find(x=>x.id===el.dataset.id);
+        if(!p) return;
+        el.disabled = true; const origText = el.textContent; el.textContent = 'Membuat file…';
+        try{ await downloadDocx(p); }catch(e){ showToast('Gagal membuat file Word: ' + e.message); }
+        el.disabled = false; el.textContent = origText;
+      };
+    });
+    app.querySelectorAll('[data-action="export-pdf"]').forEach(el=>{
+      el.onclick = () => {
+        const p = state.products.find(x=>x.id===el.dataset.id);
+        if(!p) return;
+        printAsPdf(p);
+      };
+    });
+  }
+
+  function renderSettingsModal(){
+    if(!state.settingsUnlocked){
+      return `
+      <div class="overlay" data-action="close-settings-overlay">
+        <div class="drawer" style="width:min(420px,96vw)" data-stop="1">
+          <div class="drawer-head"><h3>⚙ Pengaturan Terkunci</h3><button class="drawer-close" data-action="close-settings">✕</button></div>
+          <div class="drawer-body" style="text-align:center;padding-top:10px">
+            <div class="stamp">ADMIN<br>ONLY</div>
+            <h2 style="font-size:15px;margin-bottom:4px">Masuk ke Pengaturan</h2>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:18px">Halaman ini hanya untuk admin yang mengelola sinkronisasi Google Sheets.</p>
+            <input type="password" id="settingsPassInput" placeholder="Password Pengaturan" style="text-align:center;letter-spacing:2px;margin-bottom:10px">
+            ${state.settingsPassError ? `<div class="login-error">${escapeHtml(state.settingsPassError)}</div>` : ''}
+            <button class="btn btn-primary" style="width:100%;justify-content:center" data-action="settings-login">Masuk</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    const inputType = state.revealSecrets ? 'text' : 'password';
+    return `
+    <div class="overlay" data-action="close-settings-overlay">
+      <div class="drawer" style="width:min(560px,96vw)" data-stop="1">
+        <div class="drawer-head"><h3>⚙ Pengaturan Sinkronisasi Google Sheets</h3><button class="drawer-close" data-action="close-settings">✕</button></div>
+        <div class="drawer-body">
+          <p style="font-size:13.5px;color:var(--text-muted);line-height:1.6">Tempel <strong>URL Web App</strong> dari Google Apps Script kamu di sini. Setting ini berlaku untuk seluruh tim yang membuka website ini.</p>
+          <div class="field" style="margin:16px 0"><label>URL Apps Script (diakhiri /exec)</label><input type="${inputType}" id="scriptUrlInput" class="mono" value="${escAttr(state.scriptUrl)}" placeholder="https://script.google.com/macros/s/xxxx/exec"></div>
+          <button type="button" class="btn btn-ghost btn-sm" data-action="toggle-reveal" style="margin-bottom:16px">${state.revealSecrets ? '🙈 Sembunyikan' : '👁 Tampilkan'}</button>
+          <div style="display:flex;gap:10px;margin-bottom:6px">
+            <button class="btn btn-primary" data-action="save-settings">Simpan &amp; Sambungkan</button>
+            <button class="btn btn-ghost" data-action="test-connection">Tes Koneksi</button>
+          </div>
+          <p class="hint">Belum punya URL-nya? Minta file "AppsScript.gs" ke tim yang membuat website ini, lalu ikuti panduan setup di bagian atas file tersebut.</p>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  (async function bootstrap(){
+    await loadScriptUrlConfig();
+    render();
+  })();
+})();
+</script>
+</body>
+</html>
